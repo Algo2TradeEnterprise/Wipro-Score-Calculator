@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2050
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ScoreCalculator", "ScoreCalculator\ScoreCalculator.vbproj", "{9ECDC1AF-2305-415E-B725-2683978EDBC4}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Utilities", "Utilities\Utilities.vbproj", "{0524D87F-B8BF-4CC2-B955-49950110FE9A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9ECDC1AF-2305-415E-B725-2683978EDBC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9ECDC1AF-2305-415E-B725-2683978EDBC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9ECDC1AF-2305-415E-B725-2683978EDBC4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9ECDC1AF-2305-415E-B725-2683978EDBC4}.Debug|x64.Build.0 = Debug|Any CPU
+		{9ECDC1AF-2305-415E-B725-2683978EDBC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9ECDC1AF-2305-415E-B725-2683978EDBC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9ECDC1AF-2305-415E-B725-2683978EDBC4}.Release|x64.ActiveCfg = Release|Any CPU
+		{9ECDC1AF-2305-415E-B725-2683978EDBC4}.Release|x64.Build.0 = Release|Any CPU
+		{0524D87F-B8BF-4CC2-B955-49950110FE9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0524D87F-B8BF-4CC2-B955-49950110FE9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0524D87F-B8BF-4CC2-B955-49950110FE9A}.Debug|x64.ActiveCfg = Debug|x64
+		{0524D87F-B8BF-4CC2-B955-49950110FE9A}.Debug|x64.Build.0 = Debug|x64
+		{0524D87F-B8BF-4CC2-B955-49950110FE9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0524D87F-B8BF-4CC2-B955-49950110FE9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0524D87F-B8BF-4CC2-B955-49950110FE9A}.Release|x64.ActiveCfg = Release|x64
+		{0524D87F-B8BF-4CC2-B955-49950110FE9A}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {09F17E43-0FCD-4160-8DA8-89FDA674BF5A}
+	EndGlobalSection
+EndGlobal
