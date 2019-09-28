@@ -738,19 +738,29 @@ Namespace DAL
             '_wSheetInstance.Cells(cell).Hyperlink = New HyperLink(String.Format("'{0}'!A1", hyperlinkSheetName), String.Format("go to {0}", hyperlinkSheetName))
         End Sub
 
-        Public Sub CreatPivotTable(ByVal dataSheetName As String, ByVal dataSheetRange As String, ByVal pivotSheetName As String,
-                                   ByVal rowLablesColumnName As List(Of String), ByVal valueField As Dictionary(Of String, XLFunction))
+        Public Sub CreatPivotTable(ByVal dataSheetName As String, ByVal dataSheetRange As String, ByVal pivotSheetName As String, ByVal startingCellOfPivot As String,
+                                   ByVal columnFields As List(Of String), ByVal rowFields As List(Of String), ByVal valueFields As Dictionary(Of String, XLFunction))
             SetActiveSheet(dataSheetName)
             Dim dataRange As Excel.Range = _wSheetInstance.Range(dataSheetRange)
+            _wBookInstance.Names.Add(Name:="Range1", RefersTo:=dataRange)
 
             SetActiveSheet(pivotSheetName)
 
-            Dim startingAddressOfPivot As Excel.Range = _wSheetInstance.Range("A1")
-            Dim cache As Excel.PivotCache = _wBookInstance.PivotCaches.Create(Excel.XlPivotTableSourceType.xlDatabase, dataRange)
+            Dim startingAddressOfPivot As Excel.Range = _wSheetInstance.Range(startingCellOfPivot)
+            Dim cache As Excel.PivotCache = _wBookInstance.PivotCaches.Create(Excel.XlPivotTableSourceType.xlDatabase, SourceData:="Range1")
             Dim pivotTable As Excel.PivotTable = _wSheetInstance.PivotTables.Add(PivotCache:=cache, TableDestination:=startingAddressOfPivot)
 
-            If rowLablesColumnName IsNot Nothing AndAlso rowLablesColumnName.Count > 0 Then
-                For Each runningRowField In rowLablesColumnName
+            If columnFields IsNot Nothing AndAlso columnFields.Count > 0 Then
+                For Each runningColumnField In columnFields
+                    Dim pivotField1 As Excel.PivotField = pivotTable.PivotFields(runningColumnField)
+                    With pivotField1
+                        .Orientation = Excel.XlPivotFieldOrientation.xlColumnField
+                    End With
+                Next
+            End If
+
+            If rowFields IsNot Nothing AndAlso rowFields.Count > 0 Then
+                For Each runningRowField In rowFields
                     Dim pivotField1 As Excel.PivotField = pivotTable.PivotFields(runningRowField)
                     With pivotField1
                         .Orientation = Excel.XlPivotFieldOrientation.xlRowField
@@ -758,8 +768,8 @@ Namespace DAL
                 Next
             End If
 
-            If valueField IsNot Nothing AndAlso valueField.Count > 0 Then
-                For Each runningValue In valueField
+            If valueFields IsNot Nothing AndAlso valueFields.Count > 0 Then
+                For Each runningValue In valueFields
                     Dim pivotField As Excel.PivotField = pivotTable.PivotFields(runningValue.Key)
                     With pivotField
                         .Orientation = Excel.XlPivotFieldOrientation.xlDataField

@@ -56,6 +56,8 @@ Public Class InProcess
     Private ReadOnly _directoryName As String
     Private _totalColumn As Integer
     Private _totalRow As Integer
+    Private _pivotDataSheet As String
+    Private ReadOnly _dataStartingRow As Integer = 11
 
     Public Sub New(ByVal canceller As CancellationTokenSource, ByVal mappingFile As String, ByVal employeeFile As String)
         _cts = canceller
@@ -302,7 +304,7 @@ Public Class InProcess
                                                                     End If
                                                                 Next
 
-                                                                Dim range As String = outputExcel.GetNamedRange(11, empDetails.GetLength(0) - 1, 1, empDetails.GetLength(1) - 1)
+                                                                Dim range As String = outputExcel.GetNamedRange(_dataStartingRow, empDetails.GetLength(0) - 1, 1, empDetails.GetLength(1) - 1)
                                                                 outputExcel.WriteArrayToExcel(empDetails, range)
                                                             End If
                                                         End If
@@ -344,7 +346,7 @@ Public Class InProcess
                                                                 Dim lastRowNumber As Integer = rowNumber
                                                                 For wftSubSkillRow As Integer = skillBucketRow To wftSubSkillLastRow
                                                                     _cts.Token.ThrowIfCancellationRequested()
-                                                                    rowNumber = 11
+                                                                    rowNumber = _dataStartingRow
                                                                     Dim wftSubSkill As String = xl.GetData(wftSubSkillRow, wftSubSkillColumnNumber)
                                                                     If wftSubSkill IsNot Nothing Then
                                                                         SetDataTo2DArray(rowNumber, columnNumber, wftSubSkill, summaryData)
@@ -367,11 +369,11 @@ Public Class InProcess
                                                                         lastRowNumber = rowNumber
                                                                     End If
                                                                 Next
-                                                                For rowCout As Integer = 11 To lastRowNumber
+                                                                For rowCout As Integer = _dataStartingRow To lastRowNumber
                                                                     _cts.Token.ThrowIfCancellationRequested()
                                                                     OnHeartbeat(String.Format("Calculating best score and proficiency. ({0}/{1}). Skill Bucket:{2}, Level:{3}, Skill Name:{4}",
                                                                                               rowCout - 10, lastRowNumber - 10, skillBucket, skillLevel, skillName))
-                                                                    If rowCout = 11 Then
+                                                                    If rowCout = _dataStartingRow Then
                                                                         SetDataTo2DArray(rowCout, columnNumber, "BEST SCORE FROM Group", summaryData)
                                                                         SetDataTo2DArray(rowCout, columnNumber + 1, "Group Proficiency", summaryData)
                                                                     Else
@@ -391,7 +393,7 @@ Public Class InProcess
                                                     outputExcel.WriteArrayToExcel(summaryData, summaryRange)
                                                     outputExcel.SaveExcel()
 
-                                                    Dim summaryRowNumber As Integer = 11
+                                                    Dim summaryRowNumber As Integer = _dataStartingRow
                                                     Dim lastSummaryRow As Integer = outputExcel.GetLastRow()
                                                     Dim lastSummaryColumn As Integer = outputExcel.GetLastCol(summaryRowNumber)
                                                     If skillLevel.Contains("Foundation") Then
@@ -401,7 +403,7 @@ Public Class InProcess
                                                         If bestScoreData IsNot Nothing AndAlso bestScoreData.Count > 0 Then
                                                             For runningSummaryRow As Integer = summaryRowNumber + 1 To lastSummaryRow
                                                                 _cts.Token.ThrowIfCancellationRequested()
-                                                                OnHeartbeat(String.Format("Calculating final scores. ({0}/{1}). Skill Level:{2}, Skill Name:{3}", runningSummaryRow - 11, lastSummaryRow - 11, skillLevel, skillName))
+                                                                OnHeartbeat(String.Format("Calculating final scores. ({0}/{1}). Skill Level:{2}, Skill Name:{3}", runningSummaryRow - _dataStartingRow, lastSummaryRow - _dataStartingRow, skillLevel, skillName))
                                                                 Dim totalProficiency As String = ""
                                                                 For Each group In bestScoreData.Values
                                                                     totalProficiency = String.Format("{0}+{1}*{2}{3}", totalProficiency, group(0), group(1), runningSummaryRow)
@@ -415,6 +417,7 @@ Public Class InProcess
                                                         foundationTotalProficiencyColumnNumber = startSummaryColumn
                                                         outputExcel.SaveExcel()
                                                     ElseIf skillLevel.Contains("I T Pi") Then
+                                                        _pivotDataSheet = skillLevel
                                                         If foundationTotalProficiencyColumnNumber <> Integer.MinValue Then
                                                             Dim startSummaryColumn As Integer = 1 + lastSummaryColumn
                                                             outputExcel.SetData(summaryRowNumber - 1, startSummaryColumn, "Foundation Level Proficiency")
@@ -445,7 +448,7 @@ Public Class InProcess
                                                             Dim firstBestScoreColumn As Integer = outputExcel.FindAll("BEST SCORE FROM Group", outputExcel.GetNamedRange(1, 256, 1, 256)).FirstOrDefault.Value
                                                             For runningSummaryRow As Integer = summaryRowNumber + 1 To lastSummaryRow
                                                                 _cts.Token.ThrowIfCancellationRequested()
-                                                                OnHeartbeat(String.Format("Calculating final scores. ({0}/{1}). Skill Level:{2}, Skill Name:{3}", runningSummaryRow - 11, lastSummaryRow - 11, skillLevel, skillName))
+                                                                OnHeartbeat(String.Format("Calculating final scores. ({0}/{1}). Skill Level:{2}, Skill Name:{3}", runningSummaryRow - _dataStartingRow, lastSummaryRow - _dataStartingRow, skillLevel, skillName))
                                                                 outputExcel.SetCellFormula(runningSummaryRow, startSummaryColumn, String.Format("='{0}'!{1}{2}", previousSkillLevel, outputExcel.GetColumnName(foundationTotalProficiencyColumnNumber), runningSummaryRow))
                                                                 Dim foundationTotalScoreCell As String = String.Format("{0}{1}", outputExcel.GetColumnName(startSummaryColumn), runningSummaryRow)
                                                                 outputExcel.SetCellFormula(runningSummaryRow, startSummaryColumn + 1, String.Format("='{0}'!{1}{2}", previousSkillLevel, outputExcel.GetColumnName(foundationTotalProficiencyColumnNumber + 1), runningSummaryRow))
@@ -478,7 +481,9 @@ Public Class InProcess
                                                                 Dim empId As String = outputExcel.GetData(runningSummaryRow, 1)
                                                                 If empId IsNot Nothing AndAlso empId <> "" Then
                                                                     Dim empDetailsRowNumber As Integer = _cmn.GetRowOf2DArray(employeeData, empDataColumns("Emp No"), empId, True)
-                                                                    outputExcel.SetCellFormula(runningSummaryRow, startSummaryColumn + 9, employeeData(empDetailsRowNumber, empDataColumns("Last Month Level")))
+                                                                    If empDetailsRowNumber <> Integer.MinValue Then
+                                                                        outputExcel.SetCellFormula(runningSummaryRow, startSummaryColumn + 9, employeeData(empDetailsRowNumber, empDataColumns("Last Month Level")))
+                                                                    End If
                                                                 End If
                                                             Next
                                                         End If
@@ -487,6 +492,58 @@ Public Class InProcess
                                                 End If
                                             End If
                                         Next
+
+                                        OnHeartbeat(String.Format("Creating Pivot for {0}", skillOutputFileName))
+                                        Dim dataSheetRange As String = String.Format("{0}{1}:{2}{3}",
+                                                                                     outputExcel.GetColumnName(1), _dataStartingRow,
+                                                                                     outputExcel.GetColumnName(outputExcel.GetLastCol(_dataStartingRow)), outputExcel.GetLastRow)
+                                        outputExcel.CreateNewSheet("Progress")
+                                        outputExcel.CreatPivotTable(_pivotDataSheet, dataSheetRange, "Progress", "A3",
+                                                                    New List(Of String) From {empFileSchema("Last Month Level")},
+                                                                    New List(Of String) From {"I/T/Pi"},
+                                                                    New Dictionary(Of String, ExcelHelper.XLFunction) From {{"Emp No", ExcelHelper.XLFunction.Count}})
+
+                                        outputExcel.SetData(12, 1, skillName)
+                                        outputExcel.SetData(12, 2, "# of resources whose levels changed")
+                                        outputExcel.SetData(12, 4, "% of resources whose levels changed")
+                                        outputExcel.SetData(13, 2, "Up")
+                                        outputExcel.SetData(13, 3, "Down")
+                                        outputExcel.SetData(13, 4, "Up")
+                                        outputExcel.SetData(13, 5, "Down")
+
+                                        outputExcel.SetData(14, 1, "Foundation Complete")
+                                        outputExcel.SetCellFormula(14, 2, "=B6+G6")
+                                        outputExcel.SetCellFormula(14, 3, "=C5")
+                                        outputExcel.SetCellFormula(14, 4, "=B14/$B$19")
+                                        outputExcel.SetCellFormula(14, 5, "=C14/$B$19")
+
+                                        outputExcel.SetData(15, 1, "I")
+                                        outputExcel.SetCellFormula(15, 2, "=SUM(B7:C7)+G7")
+                                        outputExcel.SetCellFormula(15, 3, "=SUM(D5:D6)")
+                                        outputExcel.SetCellFormula(15, 4, "=B15/$B$19")
+                                        outputExcel.SetCellFormula(15, 5, "=C15/$B$19")
+
+                                        outputExcel.SetData(16, 1, "T")
+                                        outputExcel.SetCellFormula(16, 2, "=SUM(B8:D8)+G8")
+                                        outputExcel.SetCellFormula(16, 3, "=SUM(E5:E7)")
+                                        outputExcel.SetCellFormula(16, 4, "=B16/$B$19")
+                                        outputExcel.SetCellFormula(16, 5, "=C16/$B$19")
+
+                                        outputExcel.SetData(17, 1, "Pi")
+                                        outputExcel.SetCellFormula(17, 2, "=SUM(B9:E9)+G9")
+                                        outputExcel.SetCellFormula(17, 3, "=SUM(F5:F8)")
+                                        outputExcel.SetCellFormula(17, 4, "=B17/$B$19")
+                                        outputExcel.SetCellFormula(17, 5, "=C17/$B$19")
+
+                                        outputExcel.SetData(18, 1, "Total Changes")
+                                        outputExcel.SetCellFormula(18, 2, "=SUM(B14:B17)")
+                                        outputExcel.SetCellFormula(18, 3, "=SUM(C14:C17)")
+                                        outputExcel.SetCellFormula(18, 4, "=B18/$B$19")
+                                        outputExcel.SetCellFormula(18, 5, "=C18/$B$19")
+
+                                        outputExcel.SetData(19, 1, "Total Headcount")
+                                        outputExcel.SetCellFormula(19, 2, "=H10")
+
                                         outputExcel.SaveExcel()
                                     End Using
                                 End If

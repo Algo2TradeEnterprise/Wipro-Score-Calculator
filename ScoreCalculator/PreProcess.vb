@@ -256,6 +256,9 @@ Public Class PreProcess
                                                 xl.SetActiveSheet(runningSheet)
                                                 OnHeartbeat(String.Format("Checking schema {0}", previousFileName))
                                                 xl.CheckExcelSchema(empFileSchema.Values.ToArray)
+                                                If Not allSheets.Contains("Account Validation") Then
+                                                    Throw New ApplicationException("'Account Validation' sheet not available in previous month BFSI file")
+                                                End If
                                                 OnHeartbeat(String.Format("Reading {0}", previousFileName))
                                                 previousMonthEmpData = xl.GetExcelInMemory()
                                                 Exit For
@@ -303,7 +306,7 @@ Public Class PreProcess
                                         End If
                                     Next
 
-                                    OnHeartbeat(String.Format("Opening file for writting"))
+                                    OnHeartbeat(String.Format("Opening employee file for writting"))
                                     Using xl As New ExcelHelper(currentFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
                                         AddHandler xl.Heartbeat, AddressOf OnHeartbeat
                                         AddHandler xl.WaitingFor, AddressOf OnWaitingFor
