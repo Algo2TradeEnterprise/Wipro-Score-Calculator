@@ -89,6 +89,42 @@ Namespace My
                 Me("FolderPath") = value
             End Set
         End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property ScoreManagerMapping() As String
+            Get
+                Return CType(Me("ScoreManagerMapping"),String)
+            End Get
+            Set
+                Me("ScoreManagerMapping") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property ScoreManagerScore() As String
+            Get
+                Return CType(Me("ScoreManagerScore"),String)
+            End Get
+            Set
+                Me("ScoreManagerScore") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property ScoreManagerEmp() As String
+            Get
+                Return CType(Me("ScoreManagerEmp"),String)
+            End Get
+            Set
+                Me("ScoreManagerEmp") = value
+            End Set
+        End Property
     End Class
 End Namespace
 
