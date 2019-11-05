@@ -176,6 +176,8 @@ Public Class ScoreManager
                             scorexl.SetData(1, 5, "T Increased")
                             scorexl.SetData(1, 6, "I Increased")
                             scorexl.SetData(1, 7, "Foundation Increased")
+                            scorexl.SetData(1, 8, "Total Decreased")
+                            scorexl.SetData(1, 9, "Foundation Percentage")
                             Dim summaryRowNumber As Integer = 2
 
                             scorexl.CreateNewSheet("Details")
@@ -271,7 +273,16 @@ Public Class ScoreManager
                                                         scorexl.SetData(summaryRowNumber, 5, TIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
                                                         scorexl.SetData(summaryRowNumber, 6, IIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
                                                         scorexl.SetData(summaryRowNumber, 7, FoundationIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                        scorexl.SetData(summaryRowNumber, 8, (PiDecreased + TDecreased + IDecreased), "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                        scorexl.SetData(summaryRowNumber, 9, FoundationIncreased / (PiDecreased + TDecreased + IDecreased), "##,##,##0.00", ExcelHelper.XLAlign.Right)
                                                         summaryRowNumber += 1
+
+                                                        PiDecreased = 0
+                                                        TDecreased = 0
+                                                        IDecreased = 0
+                                                        TIncreased = 0
+                                                        IIncreased = 0
+                                                        FoundationIncreased = 0
 
                                                         scorexl.SaveExcel()
                                                     End If
