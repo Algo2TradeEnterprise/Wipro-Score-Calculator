@@ -220,7 +220,7 @@ Public Class ScoreManager
                                                         End Using
                                                         If empData IsNot Nothing AndAlso empData.Rows.Count > 0 Then
                                                             For row = 1 To empData.Rows.Count - 1
-                                                                OnHeartbeat(String.Format("Checking data {0}/{1} for {2}", row, empData.Rows.Count - 1, wiproSkill))
+                                                                OnHeartbeat(String.Format("Checking data {0}/{1} for {2} ({3})", row, empData.Rows.Count - 1, wiproSkill, summaryRowNumber - 1))
                                                                 Dim practice As String = empData.Rows(row).Item(4)
                                                                 Dim empID As String = empData.Rows(row).Item(0)
                                                                 Dim originalScore As String = empData.Rows(row).Item(1)
