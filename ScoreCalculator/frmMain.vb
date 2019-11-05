@@ -33,8 +33,18 @@
         End With
     End Sub
 
-    Private Sub PostProcessToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles PostProcessToolStripMenuItem.Click
+    Private Sub PostProcessToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles PostProcessToolStripMenuItem1.Click
         Dim frmToShow As New frmPostProcess
+
+        With frmToShow
+            .MdiParent = Me
+            .WindowState = FormWindowState.Normal
+            .Show()
+        End With
+    End Sub
+
+    Private Sub ScoreManagerToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ScoreManagerToolStripMenuItem.Click
+        Dim frmToShow As New frmScoreManagement
 
         With frmToShow
             .MdiParent = Me

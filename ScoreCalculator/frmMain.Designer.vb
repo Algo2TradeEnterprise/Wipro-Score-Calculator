@@ -27,6 +27,8 @@ Partial Class frmMain
         Me.PreProcessToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.InProcessToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.PostProcessToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.PostProcessToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ScoreManagerToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.WindowsToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.CascadeToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.CloseAllToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
@@ -57,9 +59,22 @@ Partial Class frmMain
         '
         'PostProcessToolStripMenuItem
         '
+        Me.PostProcessToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.PostProcessToolStripMenuItem1, Me.ScoreManagerToolStripMenuItem})
         Me.PostProcessToolStripMenuItem.Name = "PostProcessToolStripMenuItem"
         Me.PostProcessToolStripMenuItem.Size = New System.Drawing.Size(101, 24)
         Me.PostProcessToolStripMenuItem.Text = "P&ost Process"
+        '
+        'PostProcessToolStripMenuItem1
+        '
+        Me.PostProcessToolStripMenuItem1.Name = "PostProcessToolStripMenuItem1"
+        Me.PostProcessToolStripMenuItem1.Size = New System.Drawing.Size(216, 26)
+        Me.PostProcessToolStripMenuItem1.Text = "&Post Process"
+        '
+        'ScoreManagerToolStripMenuItem
+        '
+        Me.ScoreManagerToolStripMenuItem.Name = "ScoreManagerToolStripMenuItem"
+        Me.ScoreManagerToolStripMenuItem.Size = New System.Drawing.Size(216, 26)
+        Me.ScoreManagerToolStripMenuItem.Text = "&Score Manager"
         '
         'WindowsToolStripMenuItem
         '
@@ -106,4 +121,6 @@ Partial Class frmMain
     Friend WithEvents WindowsToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents CascadeToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents CloseAllToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents PostProcessToolStripMenuItem1 As ToolStripMenuItem
+    Friend WithEvents ScoreManagerToolStripMenuItem As ToolStripMenuItem
 End Class

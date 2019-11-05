@@ -35,7 +35,13 @@ Public Class ScoreManager
     Private ReadOnly _scoreFile As String
     Private ReadOnly _empFile As String
     Private ReadOnly _mappingFile As String
-    Private ReadOnly _outputFile As String
+
+    Private PiDecreased As Integer = 0
+    Private TDecreased As Integer = 0
+    Private IDecreased As Integer = 0
+    Private TIncreased As Integer = 0
+    Private IIncreased As Integer = 0
+    Private FoundationIncreased As Integer = 0
 
     Public Sub New(ByVal canceller As CancellationTokenSource,
                    ByVal scoreFile As String,
@@ -45,7 +51,6 @@ Public Class ScoreManager
         _scoreFile = scoreFile
         _empFile = empFile
         _mappingFile = mappingFile
-        _outputFile = String.Format("{0} Output File.xlsx", Path.GetDirectoryName(_scoreFile))
         _cmn = New Common(_cts)
 
         mappingFileSchema = New Dictionary(Of String, String) From
@@ -60,7 +65,7 @@ Public Class ScoreManager
         Await Task.Delay(1).ConfigureAwait(False)
         If File.Exists(_scoreFile) Then
             If File.Exists(_empFile) Then
-                OnHeartbeat("Open score file")
+                OnHeartbeat("Opening score file")
                 'id, bucket, subskill, wipro skill, score
                 Dim empScoreData As Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Decimal)))) = Nothing
                 Using scorexl As New ExcelHelper(_scoreFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
@@ -101,7 +106,7 @@ Public Class ScoreManager
                                         Dim previousWFTsubskill As String = Nothing
                                         For eachWftSubskill As Integer = wftBucketColumn To nextWFTBucketColumn - 3
                                             Dim wftSubskill As String = scorexl.GetData(11, eachWftSubskill)
-                                            Dim wftSubskillSheetName As String = GetSheetName(Nothing, wftSubskill)
+                                            Dim wftSubskillSheetName As String = FindSheetName(allSheets, wftSubskill, previousWFTsubskill)
                                             If scoreRawData.ContainsKey(wftSubskillSheetName) Then
                                                 Dim wftSubskillScore As Object(,) = scoreRawData(wftSubskillSheetName)
                                                 Dim empScoreRow As Integer = _cmn.GetRowOf2DArray(wftSubskillScore, 1, empID, True)
@@ -141,17 +146,15 @@ Public Class ScoreManager
                             End If
                         Next
                     Next
-                End Using
-                Using outputxl As New ExcelHelper(_outputFile, ExcelHelper.ExcelOpenStatus.OpenAfreshForWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                    AddHandler outputxl.Heartbeat, AddressOf OnHeartbeat
-                    AddHandler outputxl.WaitingFor, AddressOf OnWaitingFor
+
+                    OnHeartbeat("Opening mapping file")
                     Using xl As New ExcelHelper(_mappingFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
                         AddHandler xl.Heartbeat, AddressOf OnHeartbeat
                         AddHandler xl.WaitingFor, AddressOf OnWaitingFor
-                        Dim allSheets As List(Of String) = xl.GetExcelSheetsName()
-                        If allSheets IsNot Nothing AndAlso allSheets.Count > 0 Then
+                        Dim xlallSheets As List(Of String) = xl.GetExcelSheetsName()
+                        If xlallSheets IsNot Nothing AndAlso xlallSheets.Count > 0 Then
                             Dim skillName As String = Path.GetFileNameWithoutExtension(_scoreFile).Split()(0).Trim
-                            For Each runningSheet In allSheets
+                            For Each runningSheet In xlallSheets
                                 _cts.Token.ThrowIfCancellationRequested()
                                 If runningSheet.ToUpper.Contains(skillName.ToUpper) Then
                                     xl.SetActiveSheet(runningSheet)
@@ -160,8 +163,28 @@ Public Class ScoreManager
                                     Exit For
                                 End If
                             Next
+
+                            scorexl.CreateNewSheet("Summary")
+                            scorexl.SetActiveSheet("Summary")
+                            scorexl.SetData(1, 1, "SKILL")
+                            scorexl.SetData(1, 2, "Pi Decreased")
+                            scorexl.SetData(1, 3, "T Decreased")
+                            scorexl.SetData(1, 4, "I Decreased")
+                            scorexl.SetData(1, 5, "T Increased")
+                            scorexl.SetData(1, 6, "I Increased")
+                            scorexl.SetData(1, 7, "Foundation Increased")
+                            Dim summaryRowNumber As Integer = 2
+
+                            scorexl.CreateNewSheet("Details")
+                            scorexl.SetActiveSheet("Details")
+                            scorexl.SetData(1, 1, "EMP ID")
+                            scorexl.SetData(1, 2, "ORIGINAL SCORE")
+                            scorexl.SetData(1, 3, "CURRENT SCORE")
+                            scorexl.SetData(1, 4, "SKILL")
+
                             Dim skillBucketColumnNumber As Integer = xl.FindAll(mappingFileSchema("WFT Skill Bucket"), xl.GetNamedRange(1, 256, 1, 256), True).FirstOrDefault.Value
                             Dim skillBucketLastRow As Integer = xl.GetLastRow(skillBucketColumnNumber)
+                            OnHeartbeat("Finding Wipro Skill")
                             For skillBucketRow As Integer = 2 To skillBucketLastRow
                                 _cts.Token.ThrowIfCancellationRequested()
                                 Dim skillBucket As String = xl.GetData(skillBucketRow, skillBucketColumnNumber)
@@ -187,29 +210,64 @@ Public Class ScoreManager
                                                     _cts.Token.ThrowIfCancellationRequested()
                                                     Dim wiproSkill As String = xl.GetData(subskillRow, wiproSkillColumn)
                                                     If wiproSkill IsNot Nothing Then
-                                                        Dim sheetName As String = GetSheetName(outputxl.GetExcelSheetsName(), wiproSkill)
-                                                        outputxl.CreateNewSheet(sheetName)
-                                                        outputxl.SetActiveSheet(sheetName)
                                                         Dim empData As DataTable = Nothing
                                                         Using csv As New CSVHelper(_empFile, ",", _cts)
                                                             empData = csv.GetDataTableFromCSV(1)
                                                         End Using
                                                         If empData IsNot Nothing AndAlso empData.Rows.Count > 0 Then
                                                             For row = 1 To empData.Rows.Count - 1
+                                                                OnHeartbeat(String.Format("Checking data {0}/{1} for {2}", row, empData.Rows.Count - 1, wiproSkill))
                                                                 Dim practice As String = empData.Rows(row).Item(4)
+                                                                Dim empID As String = empData.Rows(row).Item(0)
+                                                                Dim originalScore As String = empData.Rows(row).Item(1)
                                                                 If practice.ToUpper = skillName.ToUpper Then
-                                                                    Dim empID As String = empData.Rows(row).Item(0)
-                                                                    Dim currentScore As String = empData.Rows(row).Item(1)
-                                                                    If currentScore = GetFinalScoreOfAnEmployee(empScoreData(empID), Nothing, Nothing, Nothing) Then
+                                                                    If originalScore = GetFinalScoreOfAnEmployee(empScoreData(empID), Nothing, Nothing, Nothing) Then
                                                                         Dim scoreWithoutWiproskill As String = GetFinalScoreOfAnEmployee(empScoreData(empID), skillBucket, subskill, wiproSkill)
-                                                                        outputxl.SetData(row, 1, empID)
-                                                                        outputxl.SetData(row, 2, currentScore)
-                                                                        outputxl.SetData(row, 3, scoreWithoutWiproskill)
+                                                                        scorexl.SetActiveSheet("Details")
+                                                                        scorexl.SetData(row + 1, 1, empID)
+                                                                        scorexl.SetData(row + 1, 2, originalScore)
+                                                                        scorexl.SetData(row + 1, 3, scoreWithoutWiproskill)
+                                                                        scorexl.SetData(row + 1, 4, wiproSkill)
+
+                                                                        If originalScore <> scoreWithoutWiproskill Then
+                                                                            If originalScore = "Pi" Then
+                                                                                PiDecreased = PiDecreased - 1
+                                                                            ElseIf originalScore = "T" Then
+                                                                                TDecreased = TDecreased - 1
+                                                                            ElseIf originalScore = "I" Then
+                                                                                IDecreased = IDecreased - 1
+                                                                            End If
+                                                                            If scoreWithoutWiproskill = "T" Then
+                                                                                TIncreased = TIncreased + 1
+                                                                            ElseIf scoreWithoutWiproskill = "I" Then
+                                                                                IIncreased = IIncreased + 1
+                                                                            ElseIf scoreWithoutWiproskill = "Foundation" Then
+                                                                                FoundationIncreased = FoundationIncreased + 1
+                                                                            End If
+                                                                        End If
+                                                                    Else
+                                                                        Throw New ApplicationException("Check original and calculated score")
                                                                     End If
+                                                                Else
+                                                                    scorexl.SetActiveSheet("Details")
+                                                                    scorexl.SetData(row + 1, 1, empID)
+                                                                    scorexl.SetData(row + 1, 2, originalScore)
+                                                                    scorexl.SetData(row + 1, 3, originalScore)
+                                                                    scorexl.SetData(row + 1, 4, practice.ToUpper)
                                                                 End If
                                                             Next
                                                         End If
-                                                        outputxl.SaveExcel()
+                                                        scorexl.SetActiveSheet("Summary")
+                                                        scorexl.SetData(summaryRowNumber, 1, wiproSkill)
+                                                        scorexl.SetData(summaryRowNumber, 2, PiDecreased)
+                                                        scorexl.SetData(summaryRowNumber, 3, TDecreased)
+                                                        scorexl.SetData(summaryRowNumber, 4, IDecreased)
+                                                        scorexl.SetData(summaryRowNumber, 5, TIncreased)
+                                                        scorexl.SetData(summaryRowNumber, 6, IIncreased)
+                                                        scorexl.SetData(summaryRowNumber, 7, FoundationIncreased)
+                                                        summaryRowNumber += 1
+
+                                                        scorexl.SaveExcel()
                                                     End If
                                                 Next
                                             Else
@@ -223,7 +281,7 @@ Public Class ScoreManager
                     End Using
                 End Using
             Else
-                    Throw New ApplicationException("Emp file not exists")
+                Throw New ApplicationException("Emp file not exists")
             End If
         Else
             Throw New ApplicationException("Score file not exists")
@@ -309,7 +367,7 @@ Public Class ScoreManager
         Return ret
     End Function
 
-    Private Function GetSheetName(ByVal allSheets As List(Of String), ByVal subskill As String) As String
+    Private Function FindSheetName(ByVal allSheets As List(Of String), ByVal subskill As String, ByVal previousSubskill As String) As String
         Dim ret As String = subskill
         If subskill.Contains(":") Then
             ret = subskill.Replace(":", " ")
@@ -329,10 +387,47 @@ Public Class ScoreManager
             ret = subskill
         End If
         If ret.Length > 30 Then ret = ret.Substring(0, 25)
+
+        Dim previousSubskillSheet As String = previousSubskill
+        If previousSubskill IsNot Nothing Then
+            If previousSubskill.Contains(":") Then
+                previousSubskillSheet = previousSubskill.Replace(":", " ")
+            ElseIf previousSubskill.Contains("\") Then
+                previousSubskillSheet = previousSubskill.Replace("\", " ")
+            ElseIf previousSubskill.Contains("/") Then
+                previousSubskillSheet = previousSubskill.Replace("/", " ")
+            ElseIf previousSubskill.Contains("?") Then
+                previousSubskillSheet = previousSubskill.Replace("?", " ")
+            ElseIf previousSubskill.Contains("*") Then
+                previousSubskillSheet = previousSubskill.Replace("*", " ")
+            ElseIf previousSubskill.Contains("[") Then
+                previousSubskillSheet = previousSubskill.Replace("[", " ")
+            ElseIf previousSubskill.Contains("]") Then
+                previousSubskillSheet = previousSubskill.Replace("]", " ")
+            Else
+                previousSubskillSheet = previousSubskill
+            End If
+            If previousSubskillSheet.Length > 30 Then previousSubskillSheet = previousSubskillSheet.Substring(0, 25)
+        End If
+
         If allSheets IsNot Nothing Then
-            While allSheets.Contains(ret, StringComparer.OrdinalIgnoreCase)
-                ret = String.Format("{0}_1", ret)
-            End While
+            Dim previousSheet As String = Nothing
+            For i = allSheets.Count - 1 To 0 Step -1
+                Dim runningSheet As String = allSheets(i)
+                If runningSheet.Contains(ret) Then
+                    If previousSubskillSheet Is Nothing OrElse
+                        previousSheet Is Nothing Then
+                        ret = runningSheet
+                        Exit For
+                    Else
+                        If previousSheet.Contains(previousSubskillSheet) Then
+                            ret = runningSheet
+                            Exit For
+                        End If
+                    End If
+                End If
+                previousSheet = runningSheet
+            Next
         End If
         Return ret
     End Function
