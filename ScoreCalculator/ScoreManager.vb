@@ -181,6 +181,7 @@ Public Class ScoreManager
                             scorexl.SetData(1, 2, "ORIGINAL SCORE")
                             scorexl.SetData(1, 3, "CURRENT SCORE")
                             scorexl.SetData(1, 4, "SKILL")
+                            Dim detailsRowNumber As Integer = 2
 
                             Dim skillBucketColumnNumber As Integer = xl.FindAll(mappingFileSchema("WFT Skill Bucket"), xl.GetNamedRange(1, 256, 1, 256), True).FirstOrDefault.Value
                             Dim skillBucketLastRow As Integer = xl.GetLastRow(skillBucketColumnNumber)
@@ -224,10 +225,11 @@ Public Class ScoreManager
                                                                     If originalScore = GetFinalScoreOfAnEmployee(empScoreData(empID), Nothing, Nothing, Nothing) Then
                                                                         Dim scoreWithoutWiproskill As String = GetFinalScoreOfAnEmployee(empScoreData(empID), skillBucket, subskill, wiproSkill)
                                                                         scorexl.SetActiveSheet("Details")
-                                                                        scorexl.SetData(row + 1, 1, empID)
-                                                                        scorexl.SetData(row + 1, 2, originalScore)
-                                                                        scorexl.SetData(row + 1, 3, scoreWithoutWiproskill)
-                                                                        scorexl.SetData(row + 1, 4, wiproSkill)
+                                                                        scorexl.SetData(detailsRowNumber, 1, empID)
+                                                                        scorexl.SetData(detailsRowNumber, 2, originalScore)
+                                                                        scorexl.SetData(detailsRowNumber, 3, scoreWithoutWiproskill)
+                                                                        scorexl.SetData(detailsRowNumber, 4, wiproSkill)
+                                                                        detailsRowNumber += 1
 
                                                                         If originalScore <> scoreWithoutWiproskill Then
                                                                             If originalScore = "Pi" Then
@@ -250,10 +252,11 @@ Public Class ScoreManager
                                                                     End If
                                                                 Else
                                                                     scorexl.SetActiveSheet("Details")
-                                                                    scorexl.SetData(row + 1, 1, empID)
-                                                                    scorexl.SetData(row + 1, 2, originalScore)
-                                                                    scorexl.SetData(row + 1, 3, originalScore)
-                                                                    scorexl.SetData(row + 1, 4, practice.ToUpper)
+                                                                    scorexl.SetData(detailsRowNumber, 1, empID)
+                                                                    scorexl.SetData(detailsRowNumber, 2, originalScore)
+                                                                    scorexl.SetData(detailsRowNumber, 3, originalScore)
+                                                                    scorexl.SetData(detailsRowNumber, 4, practice.ToUpper)
+                                                                    detailsRowNumber += 1
                                                                 End If
                                                             Next
                                                         End If
