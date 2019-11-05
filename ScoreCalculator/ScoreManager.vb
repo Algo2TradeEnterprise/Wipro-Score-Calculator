@@ -185,7 +185,8 @@ Public Class ScoreManager
                             scorexl.SetData(1, 1, "EMP ID")
                             scorexl.SetData(1, 2, "ORIGINAL SCORE")
                             scorexl.SetData(1, 3, "CURRENT SCORE")
-                            scorexl.SetData(1, 4, "SKILL")
+                            scorexl.SetData(1, 4, "LAST MONTH SCORE")
+                            scorexl.SetData(1, 5, "SKILL")
                             Dim detailsRowNumber As Integer = 2
 
                             Dim skillBucketColumnNumber As Integer = xl.FindAll(mappingFileSchema("WFT Skill Bucket"), xl.GetNamedRange(1, 256, 1, 256), True).FirstOrDefault.Value
@@ -226,6 +227,7 @@ Public Class ScoreManager
                                                                 Dim practice As String = empData.Rows(row).Item(4)
                                                                 Dim empID As String = empData.Rows(row).Item(0)
                                                                 Dim originalScore As String = empData.Rows(row).Item(1)
+                                                                Dim lastMonthScore As String = empData.Rows(row).Item(2)
                                                                 If practice.ToUpper = skillName.ToUpper Then
                                                                     If originalScore = GetFinalScoreOfAnEmployee(empScoreData(empID), Nothing, Nothing, Nothing) Then
                                                                         Dim scoreWithoutWiproskill As String = GetFinalScoreOfAnEmployee(empScoreData(empID), skillBucket, subskill, wiproSkill)
@@ -233,7 +235,8 @@ Public Class ScoreManager
                                                                         scorexl.SetData(detailsRowNumber, 1, empID)
                                                                         scorexl.SetData(detailsRowNumber, 2, originalScore)
                                                                         scorexl.SetData(detailsRowNumber, 3, scoreWithoutWiproskill)
-                                                                        scorexl.SetData(detailsRowNumber, 4, wiproSkill)
+                                                                        scorexl.SetData(detailsRowNumber, 4, lastMonthScore)
+                                                                        scorexl.SetData(detailsRowNumber, 5, wiproSkill)
                                                                         detailsRowNumber += 1
 
                                                                         If originalScore <> scoreWithoutWiproskill Then
@@ -260,7 +263,8 @@ Public Class ScoreManager
                                                                     scorexl.SetData(detailsRowNumber, 1, empID)
                                                                     scorexl.SetData(detailsRowNumber, 2, originalScore)
                                                                     scorexl.SetData(detailsRowNumber, 3, originalScore)
-                                                                    scorexl.SetData(detailsRowNumber, 4, practice.ToUpper)
+                                                                    scorexl.SetData(detailsRowNumber, 4, lastMonthScore)
+                                                                    scorexl.SetData(detailsRowNumber, 5, wiproSkill)
                                                                     detailsRowNumber += 1
                                                                 End If
                                                             Next
