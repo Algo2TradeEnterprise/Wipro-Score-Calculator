@@ -91,6 +91,7 @@ Public Class ScoreManager
                     For eachEmpRow As Integer = 12 To lastEmpScoreRow
                         OnHeartbeat(String.Format("Creating score collection {0}/{1}", eachEmpRow - 11, lastEmpScoreRow - 11))
                         Dim empID As String = scorexl.GetData(eachEmpRow, 1)
+                        Dim previousWFTsubskill As String = Nothing
                         For wftBucketColumn As Integer = 1 To 1000
                             Dim wftBucket As String = scorexl.GetData(10, wftBucketColumn)
                             If wftBucket IsNot Nothing Then
@@ -106,7 +107,6 @@ Public Class ScoreManager
                                         End If
                                     Next
                                     If nextWFTBucketColumn <> Integer.MinValue Then
-                                        Dim previousWFTsubskill As String = Nothing
                                         For eachWftSubskill As Integer = wftBucketColumn To nextWFTBucketColumn - 3
                                             Dim wftSubskill As String = scorexl.GetData(11, eachWftSubskill)
                                             Dim wftSubskillSheetName As String = FindSheetName(allSheets, wftSubskill, previousWFTsubskill)
@@ -178,6 +178,7 @@ Public Class ScoreManager
                             scorexl.SetData(1, 7, "Foundation Increased")
                             scorexl.SetData(1, 8, "Total Decreased")
                             scorexl.SetData(1, 9, "Foundation Percentage")
+                            scorexl.SetData(1, 10, "Percentile")
                             Dim summaryRowNumber As Integer = 2
 
                             scorexl.CreateNewSheet("Details")
@@ -277,8 +278,13 @@ Public Class ScoreManager
                                                         scorexl.SetData(summaryRowNumber, 5, TIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
                                                         scorexl.SetData(summaryRowNumber, 6, IIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
                                                         scorexl.SetData(summaryRowNumber, 7, FoundationIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
-                                                        scorexl.SetData(summaryRowNumber, 8, (PiDecreased + TDecreased + IDecreased), "##,##,##0.00", ExcelHelper.XLAlign.Right)
-                                                        scorexl.SetData(summaryRowNumber, 9, FoundationIncreased / (PiDecreased + TDecreased + IDecreased), "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                        Dim totalDecreased As String = String.Format("=SUM(B{0}:D{0})", summaryRowNumber)
+                                                        scorexl.SetCellFormula(summaryRowNumber, 8, totalDecreased)
+                                                        Dim foundationPercentage As String = String.Format("=G{0}/H{0}", summaryRowNumber)
+                                                        scorexl.SetCellFormula(summaryRowNumber, 9, foundationPercentage)
+                                                        Dim percentile As String = String.Format("=(((H{0}/MIN($H$2:$H$1000))*100)*50%)+((100-(I{0}/MIN($I$2:$I$1000))*100)*50%)", summaryRowNumber)
+                                                        scorexl.SetCellFormula(summaryRowNumber, 10, percentile)
+
                                                         summaryRowNumber += 1
 
                                                         PiDecreased = 0
