@@ -265,12 +265,12 @@ Public Class ScoreManager
                                                         End If
                                                         scorexl.SetActiveSheet("Summary")
                                                         scorexl.SetData(summaryRowNumber, 1, wiproSkill)
-                                                        scorexl.SetData(summaryRowNumber, 2, PiDecreased)
-                                                        scorexl.SetData(summaryRowNumber, 3, TDecreased)
-                                                        scorexl.SetData(summaryRowNumber, 4, IDecreased)
-                                                        scorexl.SetData(summaryRowNumber, 5, TIncreased)
-                                                        scorexl.SetData(summaryRowNumber, 6, IIncreased)
-                                                        scorexl.SetData(summaryRowNumber, 7, FoundationIncreased)
+                                                        scorexl.SetData(summaryRowNumber, 2, PiDecreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                        scorexl.SetData(summaryRowNumber, 3, TDecreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                        scorexl.SetData(summaryRowNumber, 4, IDecreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                        scorexl.SetData(summaryRowNumber, 5, TIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                        scorexl.SetData(summaryRowNumber, 6, IIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                        scorexl.SetData(summaryRowNumber, 7, FoundationIncreased, "##,##,##0.00", ExcelHelper.XLAlign.Right)
                                                         summaryRowNumber += 1
 
                                                         scorexl.SaveExcel()
