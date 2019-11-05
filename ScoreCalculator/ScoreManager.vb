@@ -72,10 +72,13 @@ Public Class ScoreManager
                     AddHandler scorexl.Heartbeat, AddressOf OnHeartbeat
                     AddHandler scorexl.WaitingFor, AddressOf OnWaitingFor
 
-                    OnHeartbeat("Reading excel in memory")
                     Dim scoreRawData As Dictionary(Of String, Object(,)) = Nothing
                     Dim allSheets As List(Of String) = scorexl.GetExcelSheetsName()
                     If allSheets IsNot Nothing AndAlso allSheets.Count > 0 Then
+                        If allSheets.Contains("Summary") Then Throw New ApplicationException("Summary sheet already exists in score file")
+                        If allSheets.Contains("Details") Then Throw New ApplicationException("Details sheet already exists in score file")
+
+                        OnHeartbeat("Reading excel in memory")
                         For Each runningSheet In allSheets
                             scorexl.SetActiveSheet(runningSheet)
                             If scoreRawData Is Nothing Then scoreRawData = New Dictionary(Of String, Object(,))
