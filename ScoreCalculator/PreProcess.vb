@@ -350,6 +350,8 @@ Public Class PreProcess
                                         If allSheets IsNot Nothing AndAlso Not allSheets.Contains("JScore") Then xl.CreateNewSheet("JScore")
                                         OnHeartbeat("Trying to copy 'Account Validation' sheet from previous month file")
                                         xl.CopyExcelSheet(previousFileName, "Account Validation")
+                                        OnHeartbeat("Trying to copy 'Progress' sheet from previous month file")
+                                        xl.CopyExcelSheet(previousFileName, "Progress")
                                         allSheets = xl.GetExcelSheetsName
                                         If allSheets IsNot Nothing AndAlso allSheets.Count > 0 Then
                                             For Each runningSheet In allSheets
