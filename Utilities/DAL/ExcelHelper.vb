@@ -3,6 +3,7 @@ Imports System.IO
 Imports NLog
 Imports System.Drawing
 Imports System.Threading
+Imports Microsoft.Office.Interop.Excel
 
 Namespace DAL
     Public Class ExcelHelper
@@ -739,7 +740,8 @@ Namespace DAL
         End Sub
 
         Public Sub CreatPivotTable(ByVal dataSheetName As String, ByVal dataSheetRange As String, ByVal pivotSheetName As String, ByVal startingCellOfPivot As String,
-                                   ByVal columnFields As List(Of String), ByVal rowFields As List(Of String), ByVal valueFields As Dictionary(Of String, XLFunction))
+                                   ByVal columnFields As List(Of String), ByVal rowFields As List(Of String), ByVal valueFields As Dictionary(Of String, XLFunction),
+                                   ByVal filterFields As Dictionary(Of String, String))
             SetActiveSheet(dataSheetName)
             Dim dataRange As Excel.Range = _wSheetInstance.Range(dataSheetRange)
             _wBookInstance.Names.Add(Name:="Range1", RefersTo:=dataRange)
@@ -785,7 +787,39 @@ Namespace DAL
                 Next
             End If
 
-            SaveExcel()
+            If filterFields IsNot Nothing AndAlso filterFields.Count > 0 Then
+                For Each runningValue In filterFields
+                    Dim pivotField As Excel.PivotField = pivotTable.PivotFields(runningValue.Key)
+                    pivotField.Orientation = XlPivotFieldOrientation.xlPageField
+                    Dim pis As PivotItems = pivotField.PivotItems
+                    For Each pi As PivotItem In pis
+                        If pi.Value = runningValue.Value Then
+                            pi.Visible = True
+                        Else
+                            pi.Visible = False
+                        End If
+                    Next
+                Next
+            End If
+        End Sub
+
+        Public Sub ReorderPivotTable(ByVal pivotSheetName As String, ByVal fieldName As String, ByVal sortList As List(Of String))
+            SetActiveSheet(pivotSheetName)
+            Dim pvtTable As PivotTable = _wSheetInstance.PivotTables(1)
+            Dim field As PivotField = pvtTable.PivotFields(fieldName)
+            field.AutoSortEx(0, fieldName)
+            If sortList IsNot Nothing AndAlso sortList.Count > 0 Then
+                Dim ptn As Integer = 1
+                For Each itm In sortList
+                    Dim pi As PivotItem = field.PivotItems(itm)
+                    If Not pi Is Nothing Then
+                        If pi.Visible = True Then
+                            pi.Position = ptn
+                            ptn = ptn + 1
+                        End If
+                    End If
+                Next
+            End If
         End Sub
 #End Region
 

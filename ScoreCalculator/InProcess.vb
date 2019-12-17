@@ -501,7 +501,12 @@ Public Class InProcess
                                         outputExcel.CreatPivotTable(_pivotDataSheet, dataSheetRange, "Progress", "A3",
                                                                     New List(Of String) From {empFileSchema("Last Month Level")},
                                                                     New List(Of String) From {"I/T/Pi"},
-                                                                    New Dictionary(Of String, ExcelHelper.XLFunction) From {{"Emp No", ExcelHelper.XLFunction.Count}})
+                                                                    New Dictionary(Of String, ExcelHelper.XLFunction) From {{"Emp No", ExcelHelper.XLFunction.Count}},
+                                                                    Nothing)
+
+                                        Dim orderList As List(Of String) = New List(Of String) From {"Foundation Pending", "Foundation Complete", "I", "T", "Pi"}
+                                        outputExcel.ReorderPivotTable("Progress", "Last Month Level", orderList)
+                                        outputExcel.ReorderPivotTable("Progress", "I/T/Pi", orderList)
 
                                         outputExcel.SetData(12, 1, skillName)
                                         outputExcel.SetData(12, 2, "# of resources whose levels changed")
