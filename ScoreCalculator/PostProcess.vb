@@ -51,13 +51,15 @@ Public Class PostProcess
 
                     xl.SetActiveSheet("I T Pi")
                     Dim lastRow As Integer = xl.GetLastRow(1)
+                    Dim dataRange As String = xl.GetNamedRange(10, 10, 1, xl.GetLastCol(11) - 1)
+                    Dim foundationColumnNumber As Integer = xl.FindAll("With Foundation", dataRange, True).FirstOrDefault.Value
                     For rowCounter As Integer = 12 To lastRow
-                        OnHeartbeat(String.Format("Reading {0}/{1}", rowCounter, lastRow))
+                        OnHeartbeat(String.Format("Reading {0}/{1} of {2}", rowCounter, lastRow, runningFile))
                         Dim jscr As JScore = New JScore With {
                             .EmpID = xl.GetData(rowCounter, 1),
-                            .WithFoundationITPi = xl.GetData(rowCounter, 68),
-                            .WithoutFoundationITPi = xl.GetData(rowCounter, 69),
-                            .PiApproach = xl.GetData(rowCounter, 70)
+                            .WithFoundationITPi = xl.GetData(rowCounter, foundationColumnNumber),
+                            .WithoutFoundationITPi = xl.GetData(rowCounter, foundationColumnNumber + 1),
+                            .PiApproach = xl.GetData(rowCounter, foundationColumnNumber + 2)
                         }
                         If jscoreList Is Nothing Then jscoreList = New List(Of JScore)
                         jscoreList.Add(jscr)
