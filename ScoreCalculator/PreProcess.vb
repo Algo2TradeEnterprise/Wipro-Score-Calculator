@@ -32,14 +32,16 @@ Public Class PreProcess
     Private ReadOnly _cmn As Common
     Private ReadOnly _inputDirectoryName As String
     Private ReadOnly _outputDirectoryName As String
+    Private ReadOnly _mappingFile As String
     Private ReadOnly monthList As Dictionary(Of String, String)
     Private ReadOnly scoreFileSchema As Dictionary(Of String, String)
     Private ReadOnly empFileSchema As Dictionary(Of String, String)
 
-    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String)
+    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String)
         _cts = canceller
         _inputDirectoryName = directoryName
         _outputDirectoryName = Path.Combine(Directory.GetParent(_inputDirectoryName).FullName, "In Process")
+        _mappingFile = mappingFile
         _cmn = New Common(_cts)
         monthList = New Dictionary(Of String, String) From
                     {{"JAN", "DEC"},
@@ -84,110 +86,144 @@ Public Class PreProcess
         If Not Directory.Exists(_outputDirectoryName) Then
             Throw New ApplicationException(String.Format("Directory not found. {0}", _outputDirectoryName))
         End If
-        Dim skillList As List(Of String) = Nothing
-        For Each runningFile In Directory.GetFiles(_inputDirectoryName)
-            If runningFile.ToUpper.Contains("BFSI") Then
-                Continue For
-            End If
-            If skillList Is Nothing OrElse Not skillList.Contains(runningFile) Then
-                Dim pairFound As Boolean = False
-                For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
-                    If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
-                        runningPairFile.Remove(runningPairFile.Count - 13) = runningFile.Remove(runningFile.Count - 13) Then
-                        pairFound = True
-                        If skillList Is Nothing Then skillList = New List(Of String)
-                        skillList.Add(runningFile)
-                        skillList.Add(runningPairFile)
-                        Dim pairFileMonth As String = runningPairFile.Substring(runningPairFile.Count - 13, 3)
-                        Dim mainFileMonth As String = runningFile.Substring(runningFile.Count - 13, 3)
-                        Dim pairFilePreviousMonth As String = Nothing
-                        Dim mainFilePreviousMonth As String = Nothing
-                        If monthList.ContainsKey(pairFileMonth.ToUpper) Then pairFilePreviousMonth = monthList(pairFileMonth.ToUpper)
-                        If monthList.ContainsKey(mainFileMonth.ToUpper) Then mainFilePreviousMonth = monthList(mainFileMonth.ToUpper)
+        OnHeartbeat("Opening mapping file")
+        Using mappingXL As New ExcelHelper(_mappingFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+            AddHandler mappingXL.Heartbeat, AddressOf OnHeartbeat
+            AddHandler mappingXL.WaitingFor, AddressOf OnWaitingFor
+            Dim mappingSheetList As List(Of String) = mappingXL.GetExcelSheetsName()
+            Dim skillList As List(Of String) = Nothing
+            For Each runningFile In Directory.GetFiles(_inputDirectoryName)
+                If runningFile.ToUpper.Contains("BFSI") Then
+                    Continue For
+                End If
+                If skillList Is Nothing OrElse Not skillList.Contains(runningFile) Then
+                    Dim pairFound As Boolean = False
+                    For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
+                        If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
+                            runningPairFile.Remove(runningPairFile.Count - 13) = runningFile.Remove(runningFile.Count - 13) Then
+                            pairFound = True
+                            If skillList Is Nothing Then skillList = New List(Of String)
+                            skillList.Add(runningFile)
+                            skillList.Add(runningPairFile)
+                            Dim pairFileMonth As String = runningPairFile.Substring(runningPairFile.Count - 13, 3)
+                            Dim mainFileMonth As String = runningFile.Substring(runningFile.Count - 13, 3)
+                            Dim pairFilePreviousMonth As String = Nothing
+                            Dim mainFilePreviousMonth As String = Nothing
+                            If monthList.ContainsKey(pairFileMonth.ToUpper) Then pairFilePreviousMonth = monthList(pairFileMonth.ToUpper)
+                            If monthList.ContainsKey(mainFileMonth.ToUpper) Then mainFilePreviousMonth = monthList(mainFileMonth.ToUpper)
 
-                        Dim currentFileName As String = Nothing
-                        Dim previousFileName As String = Nothing
-                        If pairFilePreviousMonth IsNot Nothing AndAlso pairFilePreviousMonth.ToUpper = mainFileMonth.ToUpper Then
-                            currentFileName = runningPairFile
-                            previousFileName = runningFile
-                        ElseIf mainFilePreviousMonth IsNot Nothing AndAlso mainFilePreviousMonth.ToUpper = pairFileMonth.ToUpper Then
-                            currentFileName = runningFile
-                            previousFileName = runningPairFile
-                        End If
+                            Dim currentFileName As String = Nothing
+                            Dim previousFileName As String = Nothing
+                            If pairFilePreviousMonth IsNot Nothing AndAlso pairFilePreviousMonth.ToUpper = mainFileMonth.ToUpper Then
+                                currentFileName = runningPairFile
+                                previousFileName = runningFile
+                            ElseIf mainFilePreviousMonth IsNot Nothing AndAlso mainFilePreviousMonth.ToUpper = pairFileMonth.ToUpper Then
+                                currentFileName = runningFile
+                                previousFileName = runningPairFile
+                            End If
 
-                        If currentFileName IsNot Nothing AndAlso previousFileName IsNot Nothing Then
-                            Dim currentMonthScoreData As Object(,) = Nothing
-                            Dim previousMonthScoreData As Object(,) = Nothing
-                            OnHeartbeat(String.Format("Opening {0}", currentFileName))
-                            Using xl As New ExcelHelper(currentFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                                AddHandler xl.Heartbeat, AddressOf OnHeartbeat
-                                AddHandler xl.WaitingFor, AddressOf OnWaitingFor
-                                Try
-                                    OnHeartbeat(String.Format("Checking schema {0}", currentFileName))
-                                    xl.CheckExcelSchema(scoreFileSchema.Values.ToArray)
-                                    OnHeartbeat(String.Format("Reading {0}", currentFileName))
-                                    currentMonthScoreData = xl.GetExcelInMemory()
-                                Catch ex As Exception
-                                    OnHeartbeatError(ex.Message)
-                                End Try
-                            End Using
-                            OnHeartbeat(String.Format("Opening {0}", previousFileName))
-                            Using xl As New ExcelHelper(previousFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                                AddHandler xl.Heartbeat, AddressOf OnHeartbeat
-                                AddHandler xl.WaitingFor, AddressOf OnWaitingFor
-                                Try
-                                    OnHeartbeat(String.Format("Checking schema {0}", previousFileName))
-                                    xl.CheckExcelSchema(scoreFileSchema.Values.ToArray)
-                                    OnHeartbeat(String.Format("Reading {0}", previousFileName))
-                                    previousMonthScoreData = xl.GetExcelInMemory()
-                                Catch ex As Exception
-                                    OnHeartbeatError(ex.Message)
-                                End Try
-                            End Using
-                            If currentMonthScoreData IsNot Nothing AndAlso previousMonthScoreData IsNot Nothing Then
-                                For rowCounter As Integer = 2 To currentMonthScoreData.GetLength(0) - 1
-                                    OnHeartbeat(String.Format("Replacing Zero score {0}/{1}. File:{2}", rowCounter, currentMonthScoreData.GetLength(0) - 1, currentFileName))
-                                    _cts.Token.ThrowIfCancellationRequested()
-                                    Dim empID As String = currentMonthScoreData(rowCounter, 1)
-                                    If empID IsNot Nothing Then
-                                        Dim previousScoreRow As Integer = _cmn.GetRowOf2DArray(previousMonthScoreData, 1, empID, True)
-                                        If previousScoreRow <> Integer.MinValue Then
-                                            For columnCounter As Integer = 3 To currentMonthScoreData.GetLength(1) - 1
-                                                _cts.Token.ThrowIfCancellationRequested()
-                                                Dim score As String = currentMonthScoreData(rowCounter, columnCounter)
-                                                If score IsNot Nothing AndAlso score = 0 Then
-                                                    Dim columnName As String = currentMonthScoreData(1, columnCounter)
-                                                    Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
-                                                    If previousScoreColumn <> Integer.MinValue Then
-                                                        currentMonthScoreData(rowCounter, columnCounter) = previousMonthScoreData(previousScoreRow, previousScoreColumn)
-                                                    End If
-                                                End If
-                                            Next
+                            If currentFileName IsNot Nothing AndAlso previousFileName IsNot Nothing Then
+                                Dim skillName As String = Path.GetFileName(currentFileName).Remove(Path.GetFileName(currentFileName).Count - 29)
+                                Dim foundationSkillList As List(Of String) = Nothing
+                                If mappingSheetList IsNot Nothing AndAlso mappingSheetList.Count > 0 Then
+                                    Dim skillMappingSheetName As String = Nothing
+                                    For Each sheet In mappingSheetList
+                                        If sheet.ToUpper.Contains(skillName.ToUpper) Then
+                                            skillMappingSheetName = sheet
+                                            Exit For
                                         End If
+                                    Next
+                                    If skillMappingSheetName IsNot Nothing Then
+                                        mappingXL.SetActiveSheet(skillMappingSheetName)
+                                        Dim mappingData As Object(,) = mappingXL.GetExcelInMemory()
+                                        foundationSkillList = GetFoundationList(mappingData)
                                     End If
-                                Next
-                                Dim outputFileName As String = Path.Combine(_outputDirectoryName, Path.GetFileName(currentFileName))
-                                If File.Exists(outputFileName) Then File.Delete(outputFileName)
-                                Using xl As New ExcelHelper(outputFileName, ExcelHelper.ExcelOpenStatus.OpenAfreshForWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                End If
+                                Dim currentMonthScoreData As Object(,) = Nothing
+                                Dim previousMonthScoreData As Object(,) = Nothing
+                                OnHeartbeat(String.Format("Opening {0}", currentFileName))
+                                Using xl As New ExcelHelper(currentFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
                                     AddHandler xl.Heartbeat, AddressOf OnHeartbeat
                                     AddHandler xl.WaitingFor, AddressOf OnWaitingFor
-                                    OnHeartbeat(String.Format("Writting {0}", outputFileName))
-                                    Dim range As String = xl.GetNamedRange(1, currentMonthScoreData.GetLength(0) - 1, 1, currentMonthScoreData.GetLength(1) - 1)
-                                    xl.WriteArrayToExcel(currentMonthScoreData, range)
-                                    xl.SaveExcel()
+                                    Try
+                                        OnHeartbeat(String.Format("Checking schema {0}", currentFileName))
+                                        xl.CheckExcelSchema(scoreFileSchema.Values.ToArray)
+                                        OnHeartbeat(String.Format("Reading {0}", currentFileName))
+                                        currentMonthScoreData = xl.GetExcelInMemory()
+                                    Catch ex As Exception
+                                        OnHeartbeatError(ex.Message)
+                                    End Try
                                 End Using
+                                OnHeartbeat(String.Format("Opening {0}", previousFileName))
+                                Using xl As New ExcelHelper(previousFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                    AddHandler xl.Heartbeat, AddressOf OnHeartbeat
+                                    AddHandler xl.WaitingFor, AddressOf OnWaitingFor
+                                    Try
+                                        OnHeartbeat(String.Format("Checking schema {0}", previousFileName))
+                                        xl.CheckExcelSchema(scoreFileSchema.Values.ToArray)
+                                        OnHeartbeat(String.Format("Reading {0}", previousFileName))
+                                        previousMonthScoreData = xl.GetExcelInMemory()
+                                    Catch ex As Exception
+                                        OnHeartbeatError(ex.Message)
+                                    End Try
+                                End Using
+                                If currentMonthScoreData IsNot Nothing AndAlso previousMonthScoreData IsNot Nothing Then
+                                    For rowCounter As Integer = 2 To currentMonthScoreData.GetLength(0) - 1
+                                        OnHeartbeat(String.Format("Replacing Zero score {0}/{1}. File:{2}", rowCounter, currentMonthScoreData.GetLength(0) - 1, currentFileName))
+                                        _cts.Token.ThrowIfCancellationRequested()
+                                        Dim empID As String = currentMonthScoreData(rowCounter, 1)
+                                        If empID IsNot Nothing Then
+                                            Dim previousScoreRow As Integer = _cmn.GetRowOf2DArray(previousMonthScoreData, 1, empID, True)
+                                            If previousScoreRow <> Integer.MinValue Then
+                                                For columnCounter As Integer = 3 To currentMonthScoreData.GetLength(1) - 1
+                                                    _cts.Token.ThrowIfCancellationRequested()
+                                                    Dim score As String = currentMonthScoreData(rowCounter, columnCounter)
+                                                    If score IsNot Nothing AndAlso score = 0 Then
+                                                        Dim columnName As String = currentMonthScoreData(1, columnCounter)
+                                                        Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
+                                                        If previousScoreColumn <> Integer.MinValue Then
+                                                            currentMonthScoreData(rowCounter, columnCounter) = previousMonthScoreData(previousScoreRow, previousScoreColumn)
+                                                        End If
+                                                    ElseIf score IsNot Nothing Then
+                                                        Dim columnName As String = currentMonthScoreData(1, columnCounter)
+                                                        If foundationSkillList IsNot Nothing AndAlso foundationSkillList.Count > 0 AndAlso
+                                                            foundationSkillList.Contains(columnName, StringComparer.OrdinalIgnoreCase) Then
+                                                            Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
+                                                            If previousScoreColumn <> Integer.MinValue Then
+                                                                Dim previousScore As String = previousMonthScoreData(previousScoreRow, previousScoreColumn)
+                                                                If previousScore > score Then
+                                                                    currentMonthScoreData(rowCounter, columnCounter) = previousScore
+                                                                End If
+                                                            End If
+                                                        End If
+                                                    End If
+                                                Next
+                                            End If
+                                        End If
+                                    Next
+                                    Dim outputFileName As String = Path.Combine(_outputDirectoryName, Path.GetFileName(currentFileName))
+                                    If File.Exists(outputFileName) Then File.Delete(outputFileName)
+                                    Using xl As New ExcelHelper(outputFileName, ExcelHelper.ExcelOpenStatus.OpenAfreshForWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                        AddHandler xl.Heartbeat, AddressOf OnHeartbeat
+                                        AddHandler xl.WaitingFor, AddressOf OnWaitingFor
+                                        OnHeartbeat(String.Format("Writting {0}", outputFileName))
+                                        Dim range As String = xl.GetNamedRange(1, currentMonthScoreData.GetLength(0) - 1, 1, currentMonthScoreData.GetLength(1) - 1)
+                                        xl.WriteArrayToExcel(currentMonthScoreData, range)
+                                        xl.SaveExcel()
+                                    End Using
+                                End If
+                            Else
+                                OnHeartbeatError(String.Format("Perfect Pair not found. Filenames: 1. {0}, 2.{1}", runningFile, runningPairFile))
                             End If
-                        Else
-                            OnHeartbeatError(String.Format("Perfect Pair not found. Filenames: 1. {0}, 2.{1}", runningFile, runningPairFile))
+                            Exit For
                         End If
-                        Exit For
+                    Next
+                    If Not pairFound Then
+                        OnHeartbeatError(String.Format("Pair not found. Filename: {0}. Probale reason: Filename not matching.", runningFile))
                     End If
-                Next
-                If Not pairFound Then
-                    OnHeartbeatError(String.Format("Pair not found. Filename: {0}. Probale reason: Filename not matching.", runningFile))
                 End If
-            End If
-        Next
+            Next
+        End Using
     End Function
 
     Public Async Function ProcessEmployeeData() As Task
@@ -197,7 +233,7 @@ Public Class PreProcess
         End If
         Dim skillList As List(Of String) = Nothing
         For Each runningFile In Directory.GetFiles(_inputDirectoryName)
-            If runningFile.ToUpper.Contains("BFSI") AndAlso skillList Is Nothing OrElse Not skillList.Contains(runningFile) Then
+            If runningFile.ToUpper.Contains("BFSI") AndAlso (skillList Is Nothing OrElse Not skillList.Contains(runningFile)) Then
                 Dim pairFound As Boolean = False
                 For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
                     If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
@@ -346,6 +382,23 @@ Public Class PreProcess
         Next
     End Function
 
+    Private Function GetFoundationList(ByVal mappingData As Object(,)) As List(Of String)
+        Dim ret As List(Of String) = Nothing
+        If mappingData IsNot Nothing Then
+            For rowCounter As Integer = 2 To mappingData.GetLength(0) - 1
+                For columnCounter As Integer = 6 To mappingData.GetLength(1) - 1
+                    If mappingData(rowCounter, columnCounter) IsNot Nothing AndAlso mappingData(rowCounter, columnCounter) <> "" Then
+                        If ret Is Nothing Then ret = New List(Of String)
+                        ret.Add(mappingData(rowCounter, columnCounter))
+                    End If
+                Next
+                If mappingData(rowCounter, 2) IsNot Nothing AndAlso mappingData(rowCounter, 2) = "I T Pi" Then
+                    Exit For
+                End If
+            Next
+        End If
+        Return ret
+    End Function
 #Region "IDisposable Support"
     Private disposedValue As Boolean ' To detect redundant calls
 

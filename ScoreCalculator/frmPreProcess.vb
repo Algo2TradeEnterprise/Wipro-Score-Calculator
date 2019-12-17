@@ -212,6 +212,7 @@ Public Class frmPreProcess
     Private _canceller As CancellationTokenSource
     Private Sub frmPreProcess_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         txtFolderpath.Text = My.Settings.FolderPath
+        txtMappingFilepath.Text = My.Settings.PreProcessMappingFilepath
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
     End Sub
 
@@ -227,6 +228,7 @@ Public Class frmPreProcess
 
     Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
         My.Settings.FolderPath = txtFolderpath.Text
+        My.Settings.PreProcessMappingFilepath = txtMappingFilepath.Text
         My.Settings.Save()
         Await StartProcessing.ConfigureAwait(False)
     End Sub
@@ -239,8 +241,9 @@ Public Class frmPreProcess
         Try
             _canceller = New CancellationTokenSource
             Dim folderPath As String = GetTextBoxText_ThreadSafe(txtFolderpath)
+            Dim mappingFile As String = GetTextBoxText_ThreadSafe(txtMappingFilepath)
             If Not Directory.Exists(folderPath) Then Throw New ApplicationException("Folder not exits")
-            Using prePrcsHlpr As New PreProcess(_canceller, folderPath)
+            Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile)
                 AddHandler prePrcsHlpr.Heartbeat, AddressOf OnHeartbeat
                 AddHandler prePrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
                 AddHandler prePrcsHlpr.WaitingFor, AddressOf OnWaitingFor
@@ -259,4 +262,18 @@ Public Class frmPreProcess
             OnHeartbeat("Process complete")
         End Try
     End Function
+
+    Private Sub btnMappingFileBrowse_Click(sender As Object, e As EventArgs) Handles btnMappingFileBrowse.Click
+        opnMappingFileDialog.Filter = "|*.xlsx"
+        opnMappingFileDialog.ShowDialog()
+    End Sub
+
+    Private Sub opnMappingFileDialog_FileOk(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles opnMappingFileDialog.FileOk
+        Dim extension As String = Path.GetExtension(opnMappingFileDialog.FileName)
+        If extension = ".xlsx" Then
+            txtMappingFilepath.Text = opnMappingFileDialog.FileName
+        Else
+            MsgBox("File Type not supported. Please Try again.", MsgBoxStyle.Critical)
+        End If
+    End Sub
 End Class

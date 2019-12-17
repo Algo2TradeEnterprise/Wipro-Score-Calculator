@@ -20,5 +20,8 @@
     <Setting Name="ScoreManagerEmp" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="PreProcessMappingFilepath" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>
