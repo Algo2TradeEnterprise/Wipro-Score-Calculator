@@ -68,8 +68,13 @@ Public Class PostProcess
             End If
         Next
         If jscoreList IsNot Nothing AndAlso jscoreList.Count > 0 Then
-            Dim jscoreData(jscoreList.Count - 1, 3) As Object
+            Dim jscoreData(jscoreList.Count, 3) As Object
             Dim rowCounter As Integer = 0
+            jscoreData(rowCounter, 0) = "EmpID"
+            jscoreData(rowCounter, 1) = "With Foundation I T Pi"
+            jscoreData(rowCounter, 2) = "Without Foundation I T Pi"
+            jscoreData(rowCounter, 3) = "Pi Approach"
+            rowCounter += 1
             For Each jscore In jscoreList
                 jscoreData(rowCounter, 0) = jscore.EmpID
                 jscoreData(rowCounter, 1) = jscore.WithFoundationITPi
@@ -105,13 +110,33 @@ Public Class PostProcess
                     End If
                 Next
                 If dataSheet IsNot Nothing Then
+                    OnHeartbeat("Modifying master data")
+                    xl.SetActiveSheet(dataSheet)
+                    Dim dataSheetRange As String = xl.GetNamedRange(1, xl.GetLastRow(1) - 1, 1, xl.GetLastCol(1) - 1)
+
+                    Dim findRange As String = xl.GetNamedRange(1, 1, 1, xl.GetLastCol(1) - 1)
+                    Dim applicableColumn As Integer = xl.FindAll("Applicable for WFT", findRange, True).FirstOrDefault.Value
+                    Dim statusColumn As Integer = xl.FindAll("Status With Foundation", findRange, True).FirstOrDefault.Value
+                    xl.FilterData(statusColumn, "=", "#N/A")
+                    xl.FilterData(applicableColumn, "=", "Yes", True)
+
+                    Dim filterdRowList As List(Of Integer) = xl.GetDataRows()
+                    If filterdRowList IsNot Nothing AndAlso filterdRowList.Count > 0 Then
+                        Dim exclusionColumn As Integer = xl.FindAll("Exclusion Reason", findRange, True).FirstOrDefault.Value
+                        For Each row In filterdRowList
+                            If row <> 1 Then
+                                xl.SetData(row, applicableColumn, "No")
+                                xl.SetData(row, exclusionColumn, "No JScore available")
+                            End If
+                        Next
+                    End If
+                    xl.UnFilterSheet(dataSheet)
+
                     OnHeartbeat("Creating pivot tables")
                     xl.CreateNewSheet("Account View")
                     xl.CreateNewSheet("Vertical View")
                     xl.CreateNewSheet("Practice View")
                     xl.CreateNewSheet("Progress Check")
-                    xl.SetActiveSheet(dataSheet)
-                    Dim dataSheetRange As String = xl.GetNamedRange(1, xl.GetLastRow(1) - 1, 1, xl.GetLastCol(1) - 1)
                     Dim orderList As List(Of String) = New List(Of String) From {"Foundation Pending", "Foundation Complete", "I", "T", "Pi"}
 
                     xl.CreatPivotTable(dataSheet, dataSheetRange, "Vertical View", "A5",

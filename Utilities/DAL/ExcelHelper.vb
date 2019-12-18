@@ -821,6 +821,30 @@ Namespace DAL
                 Next
             End If
         End Sub
+
+        Public Sub FilterData(ByVal columnNumber As String, ByVal comparer As String, ByVal value As String, Optional ByVal autoFilterMode As Boolean = False)
+            If Not autoFilterMode Then _wSheetInstance.AutoFilterMode = autoFilterMode
+            _wSheetInstance.Columns.AutoFilter(columnNumber, String.Format("{0}{1}", comparer, value))
+
+
+        End Sub
+
+        Public Sub UnFilterSheet(ByVal sheetName As String)
+            SetActiveSheet(sheetName)
+            _wSheetInstance.AutoFilterMode = False
+        End Sub
+
+        Public Function GetDataRows() As List(Of Integer)
+            Dim ret As List(Of Integer) = Nothing
+            Dim visibleCells As Excel.Range = _wSheetInstance.UsedRange.SpecialCells(Excel.XlCellType.xlCellTypeVisible, Type.Missing)
+            For Each area As Excel.Range In visibleCells.Areas
+                For Each row As Excel.Range In area.Rows
+                    If ret Is Nothing Then ret = New List(Of Integer)
+                    ret.Add(row.Row)
+                Next
+            Next
+            Return ret
+        End Function
 #End Region
 
 #Region "IDisposable Support"

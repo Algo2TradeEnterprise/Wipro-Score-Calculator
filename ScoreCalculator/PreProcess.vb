@@ -71,6 +71,8 @@ Public Class PreProcess
             {"Project Acquired Skills", "PROJECT_ACQUIRED_SKILL"},
             {"Recent Skills", "RECENT_SKILLS"},
             {"Experience", "EXPERIENCE"},
+            {"Applicable for WFT", "Applicable for WFT"},
+            {"Exclusion Reason", "Exclusion Reason"},
             {"Status With Foundation", "Status With Foundation"},
             {"Status Without Foundation", "Status Without Foundation"},
             {"Pi Approach", "Pi Approach"},
