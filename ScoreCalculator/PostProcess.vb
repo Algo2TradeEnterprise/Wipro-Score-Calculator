@@ -41,10 +41,11 @@ Public Class PostProcess
 
     Public Async Function ProcessData() As Task
         Await Task.Delay(1).ConfigureAwait(False)
-        Dim jscoreList As List(Of JScore) = Nothing
+        Dim jscoreList As Dictionary(Of String, JScore) = Nothing
         For Each runningFile In Directory.GetFiles(_directoryName)
             If runningFile.Contains("Output") Then
                 OnHeartbeat(String.Format("Opening {0}", runningFile))
+                Dim practice As String = Path.GetFileNameWithoutExtension(runningFile).Trim.Split(" ")(0)
                 Using xl As New ExcelHelper(runningFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
                     AddHandler xl.Heartbeat, AddressOf OnHeartbeat
                     AddHandler xl.WaitingFor, AddressOf OnWaitingFor
@@ -59,10 +60,18 @@ Public Class PostProcess
                             .EmpID = xl.GetData(rowCounter, 1),
                             .WithFoundationITPi = xl.GetData(rowCounter, foundationColumnNumber),
                             .WithoutFoundationITPi = xl.GetData(rowCounter, foundationColumnNumber + 1),
-                            .PiApproach = xl.GetData(rowCounter, foundationColumnNumber + 2)
+                            .PiApproach = xl.GetData(rowCounter, foundationColumnNumber + 2),
+                            .Practice = practice
                         }
-                        If jscoreList Is Nothing Then jscoreList = New List(Of JScore)
-                        jscoreList.Add(jscr)
+                        If jscoreList Is Nothing Then jscoreList = New Dictionary(Of String, JScore)
+                        If jscoreList.ContainsKey(jscr.EmpID) Then
+                            Dim existingScore As JScore = jscoreList(jscr.EmpID)
+                            If existingScore.Practice = "MF" Then
+                                jscoreList(jscr.EmpID) = jscr
+                            End If
+                        Else
+                            jscoreList.Add(jscr.EmpID, jscr)
+                        End If
                     Next
                 End Using
             End If
@@ -75,7 +84,7 @@ Public Class PostProcess
             jscoreData(rowCounter, 2) = "Without Foundation I T Pi"
             jscoreData(rowCounter, 3) = "Pi Approach"
             rowCounter += 1
-            For Each jscore In jscoreList
+            For Each jscore In jscoreList.Values
                 jscoreData(rowCounter, 0) = jscore.EmpID
                 jscoreData(rowCounter, 1) = jscore.WithFoundationITPi
                 jscoreData(rowCounter, 2) = jscore.WithoutFoundationITPi
