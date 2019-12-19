@@ -77,18 +77,20 @@ Public Class PostProcess
             End If
         Next
         If jscoreList IsNot Nothing AndAlso jscoreList.Count > 0 Then
-            Dim jscoreData(jscoreList.Count, 3) As Object
+            Dim jscoreData(jscoreList.Count, 4) As Object
             Dim rowCounter As Integer = 0
             jscoreData(rowCounter, 0) = "EmpID"
             jscoreData(rowCounter, 1) = "With Foundation I T Pi"
             jscoreData(rowCounter, 2) = "Without Foundation I T Pi"
             jscoreData(rowCounter, 3) = "Pi Approach"
+            jscoreData(rowCounter, 4) = "Practice"
             rowCounter += 1
             For Each jscore In jscoreList.Values
                 jscoreData(rowCounter, 0) = jscore.EmpID
                 jscoreData(rowCounter, 1) = jscore.WithFoundationITPi
                 jscoreData(rowCounter, 2) = jscore.WithoutFoundationITPi
                 jscoreData(rowCounter, 3) = jscore.PiApproach
+                jscoreData(rowCounter, 4) = jscore.Practice
                 rowCounter += 1
             Next
 
