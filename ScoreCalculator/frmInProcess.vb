@@ -212,6 +212,7 @@ Public Class frmInProcess
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         txtMappingFilepath.Text = My.Settings.MappingFilePath
         txtEmployeeDataFilepath.Text = My.Settings.EmployeeDataFilePath
+        txtASGDataFilepath.Text = My.Settings.ASGFilePath
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
     End Sub
 
@@ -243,6 +244,20 @@ Public Class frmInProcess
         End If
     End Sub
 
+    Private Sub btnASGDataBrowse_Click(sender As Object, e As EventArgs) Handles btnASGDataBrowse.Click
+        opnASGDataFileDialog.Filter = "|*.xlsx"
+        opnASGDataFileDialog.ShowDialog()
+    End Sub
+
+    Private Sub opnASGDataFileDialog_FileOk(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles opnASGDataFileDialog.FileOk
+        Dim extension As String = Path.GetExtension(opnASGDataFileDialog.FileName)
+        If extension = ".xlsx" Then
+            txtASGDataFilepath.Text = opnASGDataFileDialog.FileName
+        Else
+            MsgBox("File Type not supported. Please Try again.", MsgBoxStyle.Critical)
+        End If
+    End Sub
+
     Private Sub btnStop_Click(sender As Object, e As EventArgs) Handles btnStop.Click
         _canceller.Cancel()
     End Sub
@@ -250,6 +265,7 @@ Public Class frmInProcess
     Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
         My.Settings.MappingFilePath = txtMappingFilepath.Text
         My.Settings.EmployeeDataFilePath = txtEmployeeDataFilepath.Text
+        My.Settings.ASGFilePath = txtASGDataFilepath.Text
         My.Settings.Save()
         Await StartProcessing.ConfigureAwait(False)
     End Sub
@@ -263,9 +279,10 @@ Public Class frmInProcess
             _canceller = New CancellationTokenSource
             Dim mappingFilename As String = GetTextBoxText_ThreadSafe(txtMappingFilepath)
             Dim empFilename As String = GetTextBoxText_ThreadSafe(txtEmployeeDataFilepath)
+            Dim asgFilename As String = GetTextBoxText_ThreadSafe(txtASGDataFilepath)
             If Not File.Exists(mappingFilename) Then Throw New ApplicationException("Mapping file not exits")
             If Not File.Exists(empFilename) Then Throw New ApplicationException("Employee file not exits")
-            Using inPrcsHlpr As New InProcess(_canceller, mappingFilename, empFilename)
+            Using inPrcsHlpr As New InProcess(_canceller, mappingFilename, empFilename, asgFilename)
                 AddHandler inPrcsHlpr.Heartbeat, AddressOf OnHeartbeat
                 AddHandler inPrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
                 AddHandler inPrcsHlpr.WaitingFor, AddressOf OnWaitingFor

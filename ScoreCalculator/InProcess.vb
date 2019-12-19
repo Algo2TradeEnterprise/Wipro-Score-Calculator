@@ -53,16 +53,18 @@ Public Class InProcess
     Private ReadOnly _cmn As Common
     Private ReadOnly _mappingFile As String
     Private ReadOnly _employeeFile As String
+    Private ReadOnly _asgFile As String
     Private ReadOnly _directoryName As String
     Private _totalColumn As Integer
     Private _totalRow As Integer
     Private _pivotDataSheet As String
     Private ReadOnly _dataStartingRow As Integer = 11
 
-    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal mappingFile As String, ByVal employeeFile As String)
+    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal mappingFile As String, ByVal employeeFile As String, ByVal asgFile As String)
         _cts = canceller
         _mappingFile = mappingFile
         _employeeFile = employeeFile
+        _asgFile = asgFile
         _directoryName = Path.GetDirectoryName(_employeeFile)
         _cmn = New Common(_cts)
         mappingFileSchema = New Dictionary(Of String, String) From
@@ -90,6 +92,32 @@ Public Class InProcess
 
     Public Async Function ProcessData() As Task
         Await Task.Delay(1).ConfigureAwait(False)
+
+        Dim asgData As List(Of ASG) = Nothing
+        If File.Exists(_asgFile) Then
+            OnHeartbeat("Open ASG file")
+            Using xl As New ExcelHelper(_asgFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                AddHandler xl.Heartbeat, AddressOf OnHeartbeat
+                AddHandler xl.WaitingFor, AddressOf OnWaitingFor
+                OnHeartbeat("Reading Employee data")
+                Dim asg As Object(,) = xl.GetExcelInMemory()
+                If asg IsNot Nothing Then
+                    For rowCtr As Integer = 2 To asg.GetLength(0) - 1
+                        Dim assesmentName As String = asg(rowCtr, 4)
+                        Dim asgDetails As ASG = New ASG With {
+                            .EmpID = asg(rowCtr, 1),
+                            .WFTPractice = assesmentName.Trim.Split("-")(0),
+                            .WFTSkillLevel = assesmentName.Trim.Split("-")(1),
+                            .WFTSkillBucket = assesmentName.Trim.Split("-")(2),
+                            .ProjectedProficiency = assesmentName.Trim.Split("-")(3)
+                        }
+                        If asgData Is Nothing Then asgData = New List(Of ASG)
+                        asgData.Add(asgDetails)
+                    Next
+                End If
+            End Using
+        End If
+
         Dim employeeData As Object(,) = Nothing
         If File.Exists(_employeeFile) Then
             OnHeartbeat("Open employee details")
@@ -113,6 +141,7 @@ Public Class InProcess
         Else
             Throw New ApplicationException("Employee file missing")
         End If
+
         If File.Exists(_mappingFile) Then
             Using xl As New ExcelHelper(_mappingFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
                 AddHandler xl.Heartbeat, AddressOf OnHeartbeat
@@ -363,6 +392,36 @@ Public Class InProcess
                                                                             If empID IsNot Nothing Then
                                                                                 rowNumber += 1
                                                                                 SetDataTo2DArray(rowNumber, columnNumber, String.Format("='{0}'!B{1}", maxScoreSheetName, empNoRow + 1), summaryData)
+
+                                                                                If asgData IsNot Nothing AndAlso asgData.Count > 0 Then
+                                                                                    Dim asgDetails As List(Of ASG) = asgData.FindAll(Function(x)
+                                                                                                                                         Return x.EmpID = empID
+                                                                                                                                     End Function)
+                                                                                    If asgData IsNot Nothing AndAlso asgDetails.Count > 0 Then
+                                                                                        For Each runningASGData In asgDetails
+                                                                                            If Path.GetFileNameWithoutExtension(skillOutputFileName).Contains(runningASGData.WFTPractice) Then
+                                                                                                If runningASGData.WFTSkillLevel = "Foundation" Then
+                                                                                                    If skillLevel = "Foundation" Then
+                                                                                                        outputExcel.SetActiveSheet(maxScoreSheetName)
+                                                                                                        Dim lastMaxScrClm As Integer = outputExcel.GetLastCol(1) + 1
+                                                                                                        Dim range As String = outputExcel.GetNamedRange(1, outputExcel.GetLastRow(1), 1, 1)
+                                                                                                        Dim rowEmp As Integer = outputExcel.FindAll(empID, range, True).FirstOrDefault.Key
+                                                                                                        outputExcel.SetData(rowEmp, lastMaxScrClm, runningASGData.ProjectedScore, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                                                                    End If
+                                                                                                Else
+                                                                                                    If skillBucket.ToUpper = runningASGData.WFTSkillBucket.ToUpper Then
+                                                                                                        outputExcel.SetActiveSheet(maxScoreSheetName)
+                                                                                                        Dim lastMaxScrClm As Integer = outputExcel.GetLastCol(1) + 1
+                                                                                                        Dim range As String = outputExcel.GetNamedRange(1, outputExcel.GetLastRow(1), 1, 1)
+                                                                                                        Dim rowEmp As Integer = outputExcel.FindAll(empID, range, True).FirstOrDefault.Key
+                                                                                                        outputExcel.SetData(rowEmp, lastMaxScrClm, runningASGData.ProjectedScore, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                                                                    End If
+                                                                                                End If
+                                                                                            End If
+                                                                                        Next
+                                                                                        outputExcel.SetActiveSheet(skillLevel)
+                                                                                    End If
+                                                                                End If
                                                                             End If
                                                                         Next
                                                                         columnNumber += 1
