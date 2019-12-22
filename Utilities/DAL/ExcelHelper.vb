@@ -176,6 +176,13 @@ Namespace DAL
             rg = Nothing
             Return ret
         End Function
+        Public Function GetExcelInMemory(ByVal range As String) As Object(,)
+            logger.Debug("Getting excel file into memory")
+            Dim rg As Excel.Range = _wSheetInstance.Range(range)
+            Dim ret As Object(,) = DirectCast(rg.Value2, Object(,))
+            rg = Nothing
+            Return ret
+        End Function
         Public Function GetExcelSheetsName() As List(Of String)
             Dim ret As List(Of String) = Nothing
             Dim sheets As Excel.Sheets = _wBookInstance.Sheets

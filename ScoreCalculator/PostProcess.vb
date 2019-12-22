@@ -33,10 +33,24 @@ Public Class PostProcess
     Private ReadOnly _cmn As Common
     Private ReadOnly _employeeFile As String
     Private ReadOnly _directoryName As String
+    Private ReadOnly _quarterlyProgress As Dictionary(Of String, String)
     Public Sub New(ByVal canceller As CancellationTokenSource, ByVal employeeFile As String)
         _cts = canceller
         _employeeFile = employeeFile
         _directoryName = Path.GetDirectoryName(_employeeFile)
+        _quarterlyProgress = New Dictionary(Of String, String) From
+            {{"JAN", "Q4"},
+             {"FEB", "Q4"},
+             {"MAR", "Q4"},
+             {"APR", "Q1"},
+             {"MAY", "Q1"},
+             {"JUN", "Q1"},
+             {"JUL", "Q2"},
+             {"AUG", "Q2"},
+             {"SEP", "Q2"},
+             {"OCT", "Q3"},
+             {"NOV", "Q3"},
+             {"DEC", "Q3"}}
     End Sub
 
     Public Async Function ProcessData() As Task
@@ -143,20 +157,23 @@ Public Class PostProcess
                     End If
                     xl.UnFilterSheet(dataSheet)
 
-                    OnHeartbeat("Creating pivot tables")
                     xl.CreateNewSheet("Account View")
                     xl.CreateNewSheet("Vertical View")
                     xl.CreateNewSheet("Practice View")
                     xl.CreateNewSheet("Progress Check")
                     Dim orderList As List(Of String) = New List(Of String) From {"Foundation Pending", "Foundation Complete", "I", "T", "Pi"}
 
+                    OnHeartbeat("Creating pivot table 'Vertical View'")
                     xl.CreatPivotTable(dataSheet, dataSheetRange, "Vertical View", "A5",
                                        New List(Of String) From {"Status With Foundation"},
                                        New List(Of String) From {"Vertical"},
                                        New Dictionary(Of String, ExcelHelper.XLFunction) From {{"TOTAL_DAYS", ExcelHelper.XLFunction.Sum}},
                                        New Dictionary(Of String, String) From {{"Applicable for WFT", "Yes"}})
                     xl.ReorderPivotTable("Vertical View", "Status With Foundation", orderList)
+                    Dim verticalOrderList As List(Of String) = New List(Of String) From {"BFS AMERICAS", "BFS EMEA", "SECURITIES", "INSURANCE", "FS-CITI", "SUB", "BANKING PRODUCTS", "BFS- APAC", "BFSI-GRP", "EMERGING MARKETS", "BP ACCOUNT"}
+                    xl.ReorderPivotTable("Vertical View", "Vertical", verticalOrderList)
 
+                    OnHeartbeat("Creating pivot table 'Account View'")
                     xl.CreatPivotTable(dataSheet, dataSheetRange, "Account View", "A5",
                                        New List(Of String) From {"Status With Foundation"},
                                        New List(Of String) From {"GROUP_CUSTOMER_NAME"},
@@ -164,6 +181,7 @@ Public Class PostProcess
                                        New Dictionary(Of String, String) From {{"Applicable for WFT", "Yes"}})
                     xl.ReorderPivotTable("Account View", "Status With Foundation", orderList)
 
+                    OnHeartbeat("Creating pivot table 'Practice View'")
                     xl.CreatPivotTable(dataSheet, dataSheetRange, "Practice View", "A5",
                                        New List(Of String) From {"Status With Foundation"},
                                        New List(Of String) From {"Practice2"},
@@ -171,6 +189,7 @@ Public Class PostProcess
                                        New Dictionary(Of String, String) From {{"Applicable for WFT", "Yes"}})
                     xl.ReorderPivotTable("Practice View", "Status With Foundation", orderList)
 
+                    OnHeartbeat("Creating pivot table 'Progress Check'")
                     xl.CreatPivotTable(dataSheet, dataSheetRange, "Progress Check", "A5",
                                       New List(Of String) From {"Last Month Level"},
                                       New List(Of String) From {"Status With Foundation"},
@@ -220,6 +239,60 @@ Public Class PostProcess
 
                     xl.SetData(22, 1, "Total Headcount")
                     xl.SetCellFormula(22, 2, "=H12")
+
+                    Dim currentMonth As String = dataSheet.Substring(dataSheet.Count - 3, 3).Trim
+                    If _quarterlyProgress IsNot Nothing AndAlso _quarterlyProgress.Count > 0 AndAlso _quarterlyProgress.ContainsKey(currentMonth.ToUpper) Then
+                        Dim currentQuarter As String = _quarterlyProgress(currentMonth.ToUpper)
+                        Dim fy As String = Nothing
+                        If currentQuarter = "Q4" Then
+                            fy = Now.Year.ToString.Substring(2, 2)
+                        Else
+                            fy = (Now.Year + 1).ToString.Substring(2, 2)
+                        End If
+
+                        xl.SetActiveSheet("Vertical View")
+                        Dim verticalViewRange As String = "$B$7:$G$17"
+                        Dim verticalViewData As Object(,) = xl.GetExcelInMemory(verticalViewRange)
+                        xl.SetActiveSheet("Progress")
+                        Dim previousMonthRange As String = "$C$5:$H$20"
+                        Dim currentMonthRange As String = "$I$5:$N$20"
+                        Dim currentMonthDataDumpRange As String = "$I$5:$N$15"
+
+                        xl.SetData(3, 3, xl.GetData(3, 9), ExcelHelper.XLAlign.Center)
+                        xl.SetData(3, 9, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
+                        Dim previousMonthData As Object(,) = xl.GetExcelInMemory(currentMonthRange)
+                        xl.WriteArrayToExcel(previousMonthData, previousMonthRange)
+                        xl.WriteArrayToExcel(verticalViewData, currentMonthDataDumpRange)
+
+                        xl.SaveExcel()
+                        Dim currentMonthData As Object(,) = xl.GetExcelInMemory(currentMonthRange)
+
+                        Dim previousQuarter As String = xl.GetData(23, 9).ToString.Substring(0, 2).Trim
+                        Dim previousQuarterRange As String = "$C$25:$H$40"
+                        Dim currentQuarterRange As String = "$I$25:$N$40"
+                        If previousQuarter.ToUpper <> currentQuarter.ToUpper Then
+                            xl.SetData(23, 3, xl.GetData(23, 9), ExcelHelper.XLAlign.Center)
+                            xl.SetData(23, 9, String.Format("{0} FY {1}", currentQuarter, fy), ExcelHelper.XLAlign.Center)
+                            Dim previousQuarterData As Object(,) = xl.GetExcelInMemory(currentQuarterRange)
+                            xl.WriteArrayToExcel(previousQuarterData, previousQuarterRange)
+                        End If
+                        xl.WriteArrayToExcel(currentMonthData, currentQuarterRange)
+
+                        Dim previousYear As String = xl.GetData(43, 9).ToString.Substring(7, 2).Trim
+                        Dim previousYearRange As String = "$C$45:$H$60"
+                        Dim currentYearRange As String = "$I$45:$N$60"
+                        If previousYear.ToUpper <> fy.ToUpper Then
+                            xl.SetData(43, 3, xl.GetData(43, 9), ExcelHelper.XLAlign.Center)
+                            Dim previousYearData As Object(,) = xl.GetExcelInMemory(currentYearRange)
+                            xl.WriteArrayToExcel(previousYearData, previousYearRange)
+                        End If
+                        xl.SetData(43, 9, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
+                        xl.WriteArrayToExcel(currentMonthData, currentYearRange)
+
+                        Dim currentInitiationRange As String = "$I$65:$N$80"
+                        xl.SetData(63, 9, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
+                        xl.WriteArrayToExcel(currentMonthData, currentInitiationRange)
+                    End If
                 End If
             End If
         End Using
