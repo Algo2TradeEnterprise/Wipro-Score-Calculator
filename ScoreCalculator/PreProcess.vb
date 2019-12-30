@@ -193,8 +193,8 @@ Public Class PreProcess
                                                             Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
                                                             If previousScoreColumn <> Integer.MinValue Then
                                                                 Dim previousScore As String = previousMonthScoreData(previousScoreRow, previousScoreColumn)
-                                                                If previousScore > score Then
-                                                                    currentMonthScoreData(rowCounter, columnCounter) = previousScore
+                                                                If previousScore IsNot Nothing AndAlso Val(previousScore) > Val(score) Then
+                                                                    currentMonthScoreData(rowCounter, columnCounter) = Val(previousScore)
                                                                 End If
                                                             End If
                                                         End If
