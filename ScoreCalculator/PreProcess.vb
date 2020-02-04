@@ -102,7 +102,7 @@ Public Class PreProcess
                     Dim pairFound As Boolean = False
                     For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
                         If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
-                            runningPairFile.Remove(runningPairFile.Count - 13) = runningFile.Remove(runningFile.Count - 13) Then
+                            runningPairFile.Remove(runningPairFile.Count - 13).ToUpper = runningFile.Remove(runningFile.Count - 13).ToUpper Then
                             pairFound = True
                             If skillList Is Nothing Then skillList = New List(Of String)
                             skillList.Add(runningFile)
@@ -239,7 +239,7 @@ Public Class PreProcess
                 Dim pairFound As Boolean = False
                 For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
                     If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
-                        runningPairFile.Remove(runningPairFile.Count - 13) = runningFile.Remove(runningFile.Count - 13) Then
+                        runningPairFile.Remove(runningPairFile.Count - 13).ToUpper = runningFile.Remove(runningFile.Count - 13).ToUpper Then
                         pairFound = True
                         If skillList Is Nothing Then skillList = New List(Of String)
                         skillList.Add(runningFile)
