@@ -98,7 +98,7 @@ Public Class PreProcess
                 If runningFile.ToUpper.Contains("BFSI") Then
                     Continue For
                 End If
-                If skillList Is Nothing OrElse Not skillList.Contains(runningFile) Then
+                If skillList Is Nothing OrElse Not skillList.Contains(runningFile, StringComparer.OrdinalIgnoreCase) Then
                     Dim pairFound As Boolean = False
                     For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
                         If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
@@ -235,7 +235,7 @@ Public Class PreProcess
         End If
         Dim skillList As List(Of String) = Nothing
         For Each runningFile In Directory.GetFiles(_inputDirectoryName)
-            If runningFile.ToUpper.Contains("BFSI") AndAlso (skillList Is Nothing OrElse Not skillList.Contains(runningFile)) Then
+            If runningFile.ToUpper.Contains("BFSI") AndAlso (skillList Is Nothing OrElse Not skillList.Contains(runningFile, StringComparer.OrdinalIgnoreCase)) Then
                 Dim pairFound As Boolean = False
                 For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
                     If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
