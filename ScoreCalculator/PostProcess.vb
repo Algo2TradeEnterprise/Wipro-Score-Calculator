@@ -240,7 +240,10 @@ Public Class PostProcess
                     xl.SetData(22, 1, "Total Headcount")
                     xl.SetCellFormula(22, 2, "=H12")
 
-                    Dim currentMonth As String = dataSheet.Substring(dataSheet.Count - 3, 3).Trim
+                    xl.SetActiveSheet(dataSheet)
+                    Dim reportedDate As Date = Convert.ToDateTime(xl.GetData(2, 1))
+                    'Dim currentMonth As String = dataSheet.Substring(dataSheet.Count - 3, 3).Trim
+                    Dim currentMonth As String = reportedDate.ToString("MMM")
                     If _quarterlyProgress IsNot Nothing AndAlso _quarterlyProgress.Count > 0 AndAlso _quarterlyProgress.ContainsKey(currentMonth.ToUpper) Then
                         Dim currentQuarter As String = _quarterlyProgress(currentMonth.ToUpper)
                         Dim fy As String = Nothing
