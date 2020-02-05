@@ -235,6 +235,7 @@ Public Class ScoreModifier
                                                                                     If score IsNot Nothing AndAlso IsNumeric(score) Then
                                                                                         currentScore = score
                                                                                     End If
+                                                                                    If lastHighestMaxScore = 0 Then lastHighestMaxScore = 30
                                                                                     Dim projectedScore As Decimal = lastHighestMaxScore + lastHighestMaxScore / 2 + 0.1
                                                                                     If projectedScore > currentScore Then
                                                                                         If projectedScore > 100 Then projectedScore = 100
