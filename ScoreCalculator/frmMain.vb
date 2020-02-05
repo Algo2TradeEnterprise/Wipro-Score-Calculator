@@ -13,16 +13,6 @@
         Next
     End Sub
 
-    Private Sub PreProcessToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles PreProcessToolStripMenuItem.Click
-        Dim frmToShow As New frmPreProcess
-
-        With frmToShow
-            .MdiParent = Me
-            .WindowState = FormWindowState.Normal
-            .Show()
-        End With
-    End Sub
-
     Private Sub InProcessToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles InProcessToolStripMenuItem.Click
         Dim frmToShow As New frmInProcess
 
@@ -45,6 +35,26 @@
 
     Private Sub ScoreManagerToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ScoreManagerToolStripMenuItem.Click
         Dim frmToShow As New frmScoreManagement
+
+        With frmToShow
+            .MdiParent = Me
+            .WindowState = FormWindowState.Normal
+            .Show()
+        End With
+    End Sub
+
+    Private Sub PreProcessToolStripMenuItem1_Click(sender As Object, e As EventArgs) Handles PreProcessToolStripMenuItem1.Click
+        Dim frmToShow As New frmPreProcess
+
+        With frmToShow
+            .MdiParent = Me
+            .WindowState = FormWindowState.Normal
+            .Show()
+        End With
+    End Sub
+
+    Private Sub ScoreModifierToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ScoreModifierToolStripMenuItem.Click
+        Dim frmToShow As New frmScoreModifier
 
         With frmToShow
             .MdiParent = Me

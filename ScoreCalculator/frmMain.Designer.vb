@@ -32,6 +32,8 @@ Partial Class frmMain
         Me.WindowsToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.CascadeToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.CloseAllToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.PreProcessToolStripMenuItem1 = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ScoreModifierToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.menuStrip.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -47,6 +49,7 @@ Partial Class frmMain
         '
         'PreProcessToolStripMenuItem
         '
+        Me.PreProcessToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.PreProcessToolStripMenuItem1, Me.ScoreModifierToolStripMenuItem})
         Me.PreProcessToolStripMenuItem.Name = "PreProcessToolStripMenuItem"
         Me.PreProcessToolStripMenuItem.Size = New System.Drawing.Size(95, 24)
         Me.PreProcessToolStripMenuItem.Text = "P&re Process"
@@ -95,6 +98,18 @@ Partial Class frmMain
         Me.CloseAllToolStripMenuItem.Size = New System.Drawing.Size(142, 26)
         Me.CloseAllToolStripMenuItem.Text = "C&lose All"
         '
+        'PreProcessToolStripMenuItem1
+        '
+        Me.PreProcessToolStripMenuItem1.Name = "PreProcessToolStripMenuItem1"
+        Me.PreProcessToolStripMenuItem1.Size = New System.Drawing.Size(216, 26)
+        Me.PreProcessToolStripMenuItem1.Text = "&Pre Process"
+        '
+        'ScoreModifierToolStripMenuItem
+        '
+        Me.ScoreModifierToolStripMenuItem.Name = "ScoreModifierToolStripMenuItem"
+        Me.ScoreModifierToolStripMenuItem.Size = New System.Drawing.Size(216, 26)
+        Me.ScoreModifierToolStripMenuItem.Text = "&Score Modifier"
+        '
         'frmMain
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
@@ -123,4 +138,6 @@ Partial Class frmMain
     Friend WithEvents CloseAllToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents PostProcessToolStripMenuItem1 As ToolStripMenuItem
     Friend WithEvents ScoreManagerToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents PreProcessToolStripMenuItem1 As ToolStripMenuItem
+    Friend WithEvents ScoreModifierToolStripMenuItem As ToolStripMenuItem
 End Class

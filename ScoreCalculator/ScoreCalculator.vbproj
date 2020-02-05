@@ -97,6 +97,12 @@
     <Compile Include="frmScoreManagement.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="frmScoreModifier.Designer.vb">
+      <DependentUpon>frmScoreModifier.vb</DependentUpon>
+    </Compile>
+    <Compile Include="frmScoreModifier.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="InProcess.vb" />
     <Compile Include="frmInProcess.vb">
       <SubType>Form</SubType>
@@ -130,6 +136,7 @@
     <Compile Include="PostProcess.vb" />
     <Compile Include="PreProcess.vb" />
     <Compile Include="ScoreManager.vb" />
+    <Compile Include="ScoreModifier.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="frmInProcess.resx">
@@ -146,6 +153,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmScoreManagement.resx">
       <DependentUpon>frmScoreManagement.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmScoreModifier.resx">
+      <DependentUpon>frmScoreModifier.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>

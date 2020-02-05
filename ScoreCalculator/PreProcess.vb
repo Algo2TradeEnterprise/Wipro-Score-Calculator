@@ -188,16 +188,16 @@ Public Class PreProcess
                                                         End If
                                                     ElseIf score IsNot Nothing Then
                                                         Dim columnName As String = currentMonthScoreData(1, columnCounter)
-                                                        If foundationSkillList IsNot Nothing AndAlso foundationSkillList.Count > 0 AndAlso
-                                                            foundationSkillList.Contains(columnName, StringComparer.OrdinalIgnoreCase) Then
-                                                            Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
-                                                            If previousScoreColumn <> Integer.MinValue Then
-                                                                Dim previousScore As String = previousMonthScoreData(previousScoreRow, previousScoreColumn)
-                                                                If previousScore IsNot Nothing AndAlso Val(previousScore) > Val(score) Then
-                                                                    currentMonthScoreData(rowCounter, columnCounter) = Val(previousScore)
-                                                                End If
+                                                        'If foundationSkillList IsNot Nothing AndAlso foundationSkillList.Count > 0 AndAlso
+                                                        '    foundationSkillList.Contains(columnName, StringComparer.OrdinalIgnoreCase) Then
+                                                        Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
+                                                        If previousScoreColumn <> Integer.MinValue Then
+                                                            Dim previousScore As String = previousMonthScoreData(previousScoreRow, previousScoreColumn)
+                                                            If previousScore IsNot Nothing AndAlso Val(previousScore) > Val(score) Then
+                                                                currentMonthScoreData(rowCounter, columnCounter) = Val(previousScore)
                                                             End If
                                                         End If
+                                                        'End If
                                                     End If
                                                 Next
                                             End If

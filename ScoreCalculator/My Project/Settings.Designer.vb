@@ -161,6 +161,30 @@ Namespace My
                 Me("ASGFilePath") = value
             End Set
         End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property ScoreModifierFolder() As String
+            Get
+                Return CType(Me("ScoreModifierFolder"),String)
+            End Get
+            Set
+                Me("ScoreModifierFolder") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property ScoreModifierEmpListFile() As String
+            Get
+                Return CType(Me("ScoreModifierEmpListFile"),String)
+            End Get
+            Set
+                Me("ScoreModifierEmpListFile") = value
+            End Set
+        End Property
     End Class
 End Namespace
 
