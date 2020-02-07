@@ -262,8 +262,8 @@ Public Class ScoreModifier
                                                                               runningEmp.EmpID, runningPractice, sheetName))
                                                             End If
                                                         Else
-                                                                OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                  runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Foundation' sheet"))
+                                                            OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                              runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Foundation' sheet"))
                                                         End If
 
                                                         wtgCtr += 1
