@@ -420,7 +420,7 @@ Public Class ScoreModifier
                                                         End If
                                                     Else
                                                         OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                          runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'I T Pi' sheet"))
+                                                                          runningEmp.EmpID, runningPractice, "Above 55 Score Not found in 'I T Pi' sheet"))
                                                     End If
                                                 Else
                                                     OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",

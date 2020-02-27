@@ -23,7 +23,6 @@ Partial Class frmScoreModifier
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmScoreModifier))
-        Me.lblError = New System.Windows.Forms.Label()
         Me.lblProgress = New System.Windows.Forms.Label()
         Me.btnStop = New System.Windows.Forms.Button()
         Me.btnStart = New System.Windows.Forms.Button()
@@ -36,17 +35,9 @@ Partial Class frmScoreModifier
         Me.txtFolderpath = New System.Windows.Forms.TextBox()
         Me.lblMappingFIle = New System.Windows.Forms.Label()
         Me.opnEmployeeFile = New System.Windows.Forms.OpenFileDialog()
+        Me.lstError = New System.Windows.Forms.ListBox()
         Me.grpFolderBrowse.SuspendLayout()
         Me.SuspendLayout()
-        '
-        'lblError
-        '
-        Me.lblError.Location = New System.Drawing.Point(7, 172)
-        Me.lblError.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
-        Me.lblError.Name = "lblError"
-        Me.lblError.Size = New System.Drawing.Size(786, 428)
-        Me.lblError.TabIndex = 22
-        Me.lblError.Text = "Error Status"
         '
         'lblProgress
         '
@@ -147,13 +138,24 @@ Partial Class frmScoreModifier
         'opnEmployeeFile
         '
         '
+        'lstError
+        '
+        Me.lstError.ForeColor = System.Drawing.Color.FromArgb(CType(CType(29, Byte), Integer), CType(CType(29, Byte), Integer), CType(CType(29, Byte), Integer))
+        Me.lstError.FormattingEnabled = True
+        Me.lstError.ItemHeight = 16
+        Me.lstError.Location = New System.Drawing.Point(5, 172)
+        Me.lstError.Margin = New System.Windows.Forms.Padding(4)
+        Me.lstError.Name = "lstError"
+        Me.lstError.Size = New System.Drawing.Size(789, 164)
+        Me.lstError.TabIndex = 27
+        '
         'frmScoreModifier
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(800, 609)
+        Me.ClientSize = New System.Drawing.Size(800, 343)
+        Me.Controls.Add(Me.lstError)
         Me.Controls.Add(Me.grpFolderBrowse)
-        Me.Controls.Add(Me.lblError)
         Me.Controls.Add(Me.lblProgress)
         Me.Controls.Add(Me.btnStop)
         Me.Controls.Add(Me.btnStart)
@@ -165,8 +167,6 @@ Partial Class frmScoreModifier
         Me.ResumeLayout(False)
 
     End Sub
-
-    Friend WithEvents lblError As Label
     Friend WithEvents lblProgress As Label
     Friend WithEvents btnStop As Button
     Friend WithEvents btnStart As Button
@@ -179,4 +179,5 @@ Partial Class frmScoreModifier
     Friend WithEvents txtEmpFilename As TextBox
     Friend WithEvents Label2 As Label
     Friend WithEvents opnEmployeeFile As OpenFileDialog
+    Friend WithEvents lstError As ListBox
 End Class

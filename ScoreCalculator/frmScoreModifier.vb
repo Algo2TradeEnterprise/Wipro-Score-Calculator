@@ -183,6 +183,18 @@ Public Class frmScoreModifier
             [datagrid].Refresh()
         End If
     End Sub
+
+    Delegate Sub SetListAddItem_Delegate(ByVal [lst] As ListBox, ByVal [value] As Object)
+    Public Sub SetListAddItem_ThreadSafe(ByVal [lst] As ListBox, ByVal [value] As Object)
+        ' InvokeRequired required compares the thread ID of the calling thread to the thread ID of the creating thread.  
+        ' If these threads are different, it returns true.  
+        If [lst].InvokeRequired Then
+            Dim MyDelegate As New SetListAddItem_Delegate(AddressOf SetListAddItem_ThreadSafe)
+            Me.Invoke(MyDelegate, New Object() {lst, [value]})
+        Else
+            [lst].Items.Insert(0, [value])
+        End If
+    End Sub
 #End Region
 
 #Region "Event Handlers"
@@ -191,13 +203,7 @@ Public Class frmScoreModifier
     End Sub
     Private Sub OnHeartbeatError(message As String)
         Console.WriteLine(message)
-        Dim errorMessage As String = GetLabelText_ThreadSafe(lblError)
-        If errorMessage IsNot Nothing AndAlso errorMessage <> "" Then
-            errorMessage = String.Format("{0}{1}{2}", errorMessage, vbNewLine, message)
-        Else
-            errorMessage = message
-        End If
-        SetLabelText_ThreadSafe(lblError, errorMessage)
+        SetListAddItem_ThreadSafe(lstError, message)
     End Sub
     Private Sub OnDocumentDownloadComplete()
         'OnHeartbeat("Document download compelete")
@@ -229,7 +235,6 @@ Public Class frmScoreModifier
         SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStart, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, True)
-        SetLabelText_ThreadSafe(lblError, "Error Status")
         Await StartProcessingAsync.ConfigureAwait(False)
     End Sub
 
