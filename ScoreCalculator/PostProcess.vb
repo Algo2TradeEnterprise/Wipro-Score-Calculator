@@ -268,31 +268,33 @@ Public Class PostProcess
                         xl.WriteArrayToExcel(verticalViewData, currentMonthDataDumpRange)
 
                         xl.SaveExcel()
-                        Dim currentMonthData As Object(,) = xl.GetExcelInMemory(currentMonthRange)
+                        Dim currentMonthData As Object(,) = xl.GetExcelInMemory(currentMonthDataDumpRange)
 
                         Dim previousQuarter As String = xl.GetData(23, 9).ToString.Substring(0, 2).Trim
                         Dim previousQuarterRange As String = "$C$25:$H$40"
                         Dim currentQuarterRange As String = "$I$25:$N$40"
+                        Dim currentQuarterDataDumpRange As String = "$I$25:$N$35"
                         If previousQuarter.ToUpper <> currentQuarter.ToUpper Then
                             xl.SetData(23, 3, xl.GetData(23, 9), ExcelHelper.XLAlign.Center)
                             xl.SetData(23, 9, String.Format("{0} FY {1}", currentQuarter, fy), ExcelHelper.XLAlign.Center)
                             Dim previousQuarterData As Object(,) = xl.GetExcelInMemory(currentQuarterRange)
                             xl.WriteArrayToExcel(previousQuarterData, previousQuarterRange)
                         End If
-                        xl.WriteArrayToExcel(currentMonthData, currentQuarterRange)
+                        xl.WriteArrayToExcel(currentMonthData, currentQuarterDataDumpRange)
 
                         Dim previousYear As String = xl.GetData(43, 9).ToString.Substring(7, 2).Trim
                         Dim previousYearRange As String = "$C$45:$H$60"
                         Dim currentYearRange As String = "$I$45:$N$60"
+                        Dim currentYearDataDumpRange As String = "$I$45:$N$55"
                         If previousYear.ToUpper <> fy.ToUpper Then
                             xl.SetData(43, 3, xl.GetData(43, 9), ExcelHelper.XLAlign.Center)
                             Dim previousYearData As Object(,) = xl.GetExcelInMemory(currentYearRange)
                             xl.WriteArrayToExcel(previousYearData, previousYearRange)
                         End If
                         xl.SetData(43, 9, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
-                        xl.WriteArrayToExcel(currentMonthData, currentYearRange)
+                        xl.WriteArrayToExcel(currentMonthData, currentYearDataDumpRange)
 
-                        Dim currentInitiationRange As String = "$I$65:$N$80"
+                        Dim currentInitiationRange As String = "$I$65:$N$75"
                         xl.SetData(63, 9, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
                         xl.WriteArrayToExcel(currentMonthData, currentInitiationRange)
                     End If
