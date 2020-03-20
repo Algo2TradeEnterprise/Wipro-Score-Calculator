@@ -183,6 +183,18 @@ Public Class frmPreProcess
             [datagrid].Refresh()
         End If
     End Sub
+
+    Delegate Sub SetListAddItem_Delegate(ByVal [lst] As ListBox, ByVal [value] As Object)
+    Public Sub SetListAddItem_ThreadSafe(ByVal [lst] As ListBox, ByVal [value] As Object)
+        ' InvokeRequired required compares the thread ID of the calling thread to the thread ID of the creating thread.  
+        ' If these threads are different, it returns true.  
+        If [lst].InvokeRequired Then
+            Dim MyDelegate As New SetListAddItem_Delegate(AddressOf SetListAddItem_ThreadSafe)
+            Me.Invoke(MyDelegate, New Object() {lst, [value]})
+        Else
+            [lst].Items.Insert(0, [value])
+        End If
+    End Sub
 #End Region
 
 #Region "Event Handlers"
@@ -190,13 +202,7 @@ Public Class frmPreProcess
         SetLabelText_ThreadSafe(lblProgress, message)
     End Sub
     Private Sub OnHeartbeatError(message As String)
-        Dim errorMessage As String = GetLabelText_ThreadSafe(lblError)
-        If errorMessage IsNot Nothing AndAlso errorMessage <> "" Then
-            errorMessage = String.Format("{0}{1}{2}", errorMessage, vbNewLine, message)
-        Else
-            errorMessage = message
-        End If
-        SetLabelText_ThreadSafe(lblError, errorMessage)
+        SetListAddItem_ThreadSafe(lstError, message)
     End Sub
     Private Sub OnDocumentDownloadComplete()
         'OnHeartbeat("Document download compelete")
@@ -209,11 +215,23 @@ Public Class frmPreProcess
     End Sub
 #End Region
 
+    Private ReadOnly _preProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
+    Private ReadOnly _preProcessScoreModifierFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process", "Score Modifier")
+    Private ReadOnly _inProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "In Process")
+    Private ReadOnly _postProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
+
     Private _canceller As CancellationTokenSource
     Private Sub frmPreProcess_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        'txtFolderpath.Text = My.Settings.FolderPath
-        'txtMappingFilepath.Text = My.Settings.PreProcessMappingFilepath
-        SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, False)
+        txtFolderpath.Text = My.Settings.FolderPath
+        chkbZeroScoreReplacement.Checked = My.Settings.ZeroScoreReplace
+        chkbMaxScoreReplacement.Checked = My.Settings.MaxScoreReplace
+        chkbFndtnCmplt.Checked = My.Settings.FoundationPendingToComplete
+        chkbITPi.Checked = My.Settings.FoundationCompleteToITPi
+        chkbFndtnCmplt_CheckedChanged(sender, e)
+        chkbITPi_CheckedChanged(sender, e)
+        txtFndtnCmplt.Text = My.Settings.FoundationPendingToCompleteMinScore
+        txtITPi.Text = My.Settings.FoundationCompleteToITPiMinScore
+
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
     End Sub
 
@@ -228,31 +246,136 @@ Public Class frmPreProcess
     End Sub
 
     Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
-        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
-        txtFolderpath.Text = directoryName
-        For Each runningFile In Directory.GetFiles(directoryName)
-            If runningFile.ToUpper.Contains("MAPPING") Then
-                txtMappingFilepath.Text = runningFile
-            End If
-        Next
-
         My.Settings.FolderPath = txtFolderpath.Text
-        My.Settings.PreProcessMappingFilepath = txtMappingFilepath.Text
         My.Settings.Save()
-        Await StartProcessing.ConfigureAwait(False)
+        Await Task.Run(AddressOf StartProcessingAsync).ConfigureAwait(False)
     End Sub
 
-    Private Async Function StartProcessing() As Task
+    Private Async Function StartProcessingAsync() As Task
         SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStart, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, True)
-        SetLabelText_ThreadSafe(lblError, "Error Status")
         Try
             _canceller = New CancellationTokenSource
-            Dim folderPath As String = GetTextBoxText_ThreadSafe(txtFolderpath)
-            Dim mappingFile As String = GetTextBoxText_ThreadSafe(txtMappingFilepath)
-            If Not Directory.Exists(folderPath) Then Throw New ApplicationException("Folder not exits")
-            Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile)
+
+            StartFileDistribution()
+            Await StartScoreModifyProcessingAsync().ConfigureAwait(False)
+            Await StartMaxScoreReplacementProcessingAsync().ConfigureAwait(False)
+        Catch ex As Exception
+            MsgBox(ex.ToString, MsgBoxStyle.Critical)
+        Finally
+            SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, True)
+            SetObjectEnableDisable_ThreadSafe(btnStart, True)
+            SetObjectEnableDisable_ThreadSafe(btnStop, False)
+            OnHeartbeat("Process complete")
+        End Try
+    End Function
+
+    Private Sub StartFileDistribution()
+        OnHeartbeat("Distributing files to there required folders")
+        Dim inputFolder As String = txtFolderpath.Text
+
+
+
+        For Each runningFile In Directory.GetFiles(inputFolder)
+            _canceller.Token.ThrowIfCancellationRequested()
+            If runningFile.ToUpper.Contains("MAPPING") Then
+                Dim preProcessMappingFile As String = Path.Combine(_preProcessFolder, Path.GetFileName(runningFile))
+                If File.Exists(preProcessMappingFile) Then File.Delete(preProcessMappingFile)
+                File.Copy(runningFile, preProcessMappingFile)
+
+                Dim inProcessMappingFile As String = Path.Combine(_inProcessFolder, Path.GetFileName(runningFile))
+                If File.Exists(inProcessMappingFile) Then File.Delete(inProcessMappingFile)
+                File.Copy(runningFile, inProcessMappingFile)
+            ElseIf runningFile.ToUpper.Contains("ASG") Then
+                Dim inProcessFile As String = Path.Combine(_inProcessFolder, Path.GetFileName(runningFile))
+                If File.Exists(inProcessFile) Then File.Delete(inProcessFile)
+                File.Copy(runningFile, inProcessFile)
+            ElseIf runningFile.ToUpper.Contains("BFSI") Then
+                Dim preProcessFile As String = Path.Combine(_preProcessFolder, Path.GetFileName(runningFile))
+                If File.Exists(preProcessFile) Then File.Delete(preProcessFile)
+                File.Copy(runningFile, preProcessFile)
+            End If
+        Next
+
+        Dim previousMonth As String = Nothing
+        For Each runningFile In Directory.GetFiles(inputFolder)
+            _canceller.Token.ThrowIfCancellationRequested()
+            If runningFile.ToUpper.Contains("OUTPUT") Then
+                Dim preProcessScrMdfrFile As String = Path.Combine(_preProcessScoreModifierFolder, Path.GetFileName(runningFile))
+                If File.Exists(preProcessScrMdfrFile) Then File.Delete(preProcessScrMdfrFile)
+                File.Copy(runningFile, preProcessScrMdfrFile)
+
+                previousMonth = Path.GetFileName(preProcessScrMdfrFile).Substring(Path.GetFileName(preProcessScrMdfrFile).Count - 13)
+            End If
+        Next
+
+        If previousMonth IsNot Nothing Then
+            For Each runningFile In Directory.GetFiles(inputFolder)
+                _canceller.Token.ThrowIfCancellationRequested()
+                If runningFile.ToUpper.Contains("ANALYSIS") Then
+                    If runningFile.ToUpper.Contains(previousMonth.ToUpper) Then
+                        Dim preProcessFile As String = Path.Combine(_preProcessFolder, Path.GetFileName(runningFile))
+                        If File.Exists(preProcessFile) Then File.Delete(preProcessFile)
+                        File.Copy(runningFile, preProcessFile)
+                    Else
+                        Dim preProcessScrMdfrFile As String = Path.Combine(_preProcessScoreModifierFolder, Path.GetFileName(runningFile))
+                        If File.Exists(preProcessScrMdfrFile) Then File.Delete(preProcessScrMdfrFile)
+                        File.Copy(runningFile, preProcessScrMdfrFile)
+                    End If
+                End If
+            Next
+        End If
+    End Sub
+
+    Private Async Function StartScoreModifyProcessingAsync() As Task
+        Dim mdfyPndngToCmplt As Boolean = GetCheckBoxChecked_ThreadSafe(chkbFndtnCmplt)
+        Dim mdfyPndngToCmpltMinScore As Decimal = GetTextBoxText_ThreadSafe(txtFndtnCmplt)
+        Dim mdfyCmpltToITPi As Boolean = GetCheckBoxChecked_ThreadSafe(chkbITPi)
+        Dim mdfyCmpltToITPiMinScore As Decimal = GetTextBoxText_ThreadSafe(txtITPi)
+
+        My.Settings.FoundationPendingToComplete = mdfyPndngToCmplt
+        My.Settings.FoundationCompleteToITPi = mdfyCmpltToITPi
+        My.Settings.FoundationPendingToCompleteMinScore = mdfyPndngToCmpltMinScore
+        My.Settings.FoundationCompleteToITPiMinScore = mdfyCmpltToITPiMinScore
+        My.Settings.Save()
+
+        If mdfyPndngToCmplt OrElse mdfyCmpltToITPi Then
+            Dim directoryPath As String = _preProcessScoreModifierFolder
+            Dim empFile As String = Nothing
+
+            Using scrMdfr As New ScoreModifier(_canceller, directoryPath, mdfyPndngToCmplt, mdfyCmpltToITPi, mdfyPndngToCmpltMinScore, mdfyCmpltToITPiMinScore)
+                AddHandler scrMdfr.Heartbeat, AddressOf OnHeartbeat
+                AddHandler scrMdfr.HeartbeatError, AddressOf OnHeartbeatError
+                AddHandler scrMdfr.WaitingFor, AddressOf OnWaitingFor
+                AddHandler scrMdfr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
+                AddHandler scrMdfr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
+
+                Await scrMdfr.ProcessDataAsync().ConfigureAwait(False)
+            End Using
+        End If
+    End Function
+
+    Private Async Function StartMaxScoreReplacementProcessingAsync() As Task
+        Dim zeroScoreReplace As Boolean = GetCheckBoxChecked_ThreadSafe(chkbZeroScoreReplacement)
+        Dim maxScoreReplace As Boolean = GetCheckBoxChecked_ThreadSafe(chkbMaxScoreReplacement)
+        My.Settings.ZeroScoreReplace = zeroScoreReplace
+        My.Settings.MaxScoreReplace = maxScoreReplace
+        My.Settings.Save()
+
+        If zeroScoreReplace OrElse maxScoreReplace Then
+            Dim folderPath As String = Nothing
+            Dim mappingFile As String = Nothing
+            Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
+            folderPath = directoryName
+            For Each runningFile In Directory.GetFiles(directoryName)
+                If runningFile.ToUpper.Contains("MAPPING") Then
+                    mappingFile = runningFile
+                End If
+            Next
+            If mappingFile Is Nothing Then Throw New ApplicationException("Mapping file not exits")
+
+            Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile, zeroScoreReplace, maxScoreReplace)
                 AddHandler prePrcsHlpr.Heartbeat, AddressOf OnHeartbeat
                 AddHandler prePrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
                 AddHandler prePrcsHlpr.WaitingFor, AddressOf OnWaitingFor
@@ -262,27 +385,16 @@ Public Class frmPreProcess
                 Await prePrcsHlpr.ProcessEmployeeData().ConfigureAwait(False)
                 Await prePrcsHlpr.ProcessScoreData().ConfigureAwait(False)
             End Using
-        Catch ex As Exception
-            MsgBox(ex.Message, MsgBoxStyle.Critical)
-        Finally
-            SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, True)
-            SetObjectEnableDisable_ThreadSafe(btnStart, True)
-            SetObjectEnableDisable_ThreadSafe(btnStop, False)
-            OnHeartbeat("Process complete")
-        End Try
+        End If
     End Function
 
-    Private Sub btnMappingFileBrowse_Click(sender As Object, e As EventArgs) Handles btnMappingFileBrowse.Click
-        opnMappingFileDialog.Filter = "|*.xlsx"
-        opnMappingFileDialog.ShowDialog()
+    Private Sub chkbFndtnCmplt_CheckedChanged(sender As Object, e As EventArgs) Handles chkbFndtnCmplt.CheckedChanged
+        lblFndtnCmplt.Visible = chkbFndtnCmplt.Checked
+        txtFndtnCmplt.Visible = chkbFndtnCmplt.Checked
     End Sub
 
-    Private Sub opnMappingFileDialog_FileOk(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles opnMappingFileDialog.FileOk
-        Dim extension As String = Path.GetExtension(opnMappingFileDialog.FileName)
-        If extension = ".xlsx" Then
-            txtMappingFilepath.Text = opnMappingFileDialog.FileName
-        Else
-            MsgBox("File Type not supported. Please Try again.", MsgBoxStyle.Critical)
-        End If
+    Private Sub chkbITPi_CheckedChanged(sender As Object, e As EventArgs) Handles chkbITPi.CheckedChanged
+        lblITPi.Visible = chkbITPi.Checked
+        txtITPi.Visible = chkbITPi.Checked
     End Sub
 End Class

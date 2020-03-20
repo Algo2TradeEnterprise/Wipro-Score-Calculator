@@ -37,11 +37,17 @@ Public Class PreProcess
     Private ReadOnly scoreFileSchema As Dictionary(Of String, String)
     Private ReadOnly empFileSchema As Dictionary(Of String, String)
 
-    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String)
+    Private ReadOnly _replaceZeroScore As Boolean
+    Private ReadOnly _replaceMaxScore As Boolean
+
+    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String, ByVal replaceZeroScore As Boolean, ByVal replaceMaxScore As Boolean)
         _cts = canceller
         _inputDirectoryName = directoryName
         _outputDirectoryName = Path.Combine(Directory.GetParent(_inputDirectoryName).FullName, "In Process")
         _mappingFile = mappingFile
+        _replaceZeroScore = replaceZeroScore
+        _replaceMaxScore = replaceMaxScore
+
         _cmn = New Common(_cts)
         monthList = New Dictionary(Of String, String) From
                     {{"JAN", "DEC"},
@@ -180,13 +186,13 @@ Public Class PreProcess
                                                 For columnCounter As Integer = 3 To currentMonthScoreData.GetLength(1) - 1
                                                     _cts.Token.ThrowIfCancellationRequested()
                                                     Dim score As String = currentMonthScoreData(rowCounter, columnCounter)
-                                                    If score IsNot Nothing AndAlso score = 0 Then
+                                                    If score IsNot Nothing AndAlso score = 0 AndAlso _replaceZeroScore Then
                                                         Dim columnName As String = currentMonthScoreData(1, columnCounter)
                                                         Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
                                                         If previousScoreColumn <> Integer.MinValue Then
                                                             currentMonthScoreData(rowCounter, columnCounter) = previousMonthScoreData(previousScoreRow, previousScoreColumn)
                                                         End If
-                                                    ElseIf score IsNot Nothing Then
+                                                    ElseIf score IsNot Nothing AndAlso _replaceMaxScore Then
                                                         Dim columnName As String = currentMonthScoreData(1, columnCounter)
                                                         'If foundationSkillList IsNot Nothing AndAlso foundationSkillList.Count > 0 AndAlso
                                                         '    foundationSkillList.Contains(columnName, StringComparer.OrdinalIgnoreCase) Then

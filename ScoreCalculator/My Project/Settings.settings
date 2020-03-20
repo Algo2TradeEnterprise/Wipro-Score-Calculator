@@ -2,38 +2,35 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="My" GeneratedClassName="MySettings" UseMySettingsClassName="true">
   <Profiles />
   <Settings>
-    <Setting Name="MappingFilePath" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="EmployeeDataFilePath" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
     <Setting Name="FolderPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="ScoreManagerMapping" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ScoreManagerScore" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="ScoreManagerMapping" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
     <Setting Name="ScoreManagerEmp" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="PreProcessMappingFilepath" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="ZeroScoreReplace" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="PostProcessEmployeeFilepath" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="MaxScoreReplace" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ASGFilePath" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="FoundationPendingToComplete" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ScoreModifierFolder" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="FoundationCompleteToITPi" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ScoreModifierEmpListFile" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="FoundationPendingToCompleteMinScore" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="FoundationCompleteToITPiMinScore" Type="System.Decimal" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

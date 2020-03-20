@@ -48,10 +48,22 @@ Public Class ScoreModifier
     Private ReadOnly _employeeListFileName As String
     Private ReadOnly _outputDirectoryName As String
 
-    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryPath As String, ByVal empFileName As String)
+    Private ReadOnly _ModifyPendingToComplete As Boolean
+    Private ReadOnly _ModifyPendingToCompleteMinScore As Decimal
+    Private ReadOnly _ModifyCompleteToITPi As Boolean
+    Private ReadOnly _ModifyCompleteToITPiMinScore As Decimal
+
+    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryPath As String,
+                   ByVal mdfyPndngToCmplt As Boolean, ByVal mdfyCmpltToITPi As Boolean,
+                   ByVal pndngToCmpltMinScore As Decimal, ByVal cmpltToITPiMinScore As Decimal)
         _cts = canceller
         _directoryName = directoryPath
-        _employeeListFileName = empFileName
+        _ModifyPendingToComplete = mdfyPndngToCmplt
+        _ModifyPendingToCompleteMinScore = pndngToCmpltMinScore
+        _ModifyCompleteToITPi = mdfyCmpltToITPi
+        _ModifyCompleteToITPiMinScore = cmpltToITPiMinScore
+
+        _employeeListFileName = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process", "Score Modifier", "List.csv")
 
         _outputDirectoryName = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
     End Sub
@@ -121,119 +133,273 @@ Public Class ScoreModifier
                     End If
                     If currentPracticeScoreFile IsNot Nothing AndAlso currentPracticeOutputFile IsNot Nothing Then
                         OnHeartbeat(String.Format("Opening output file {0}", currentPracticeOutputFile))
-                        Using outputXL As New ExcelHelper(currentPracticeOutputFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                            outputXL.SetActiveSheet("Foundation")
+                        If _ModifyPendingToComplete Then
+                            Using outputXL As New ExcelHelper(currentPracticeOutputFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                outputXL.SetActiveSheet("Foundation")
 
-                            OnHeartbeat(String.Format("Getting Weightage Data for {0} #Pass 1", runningPractice))
-                            Dim weightageData As List(Of WeightageDetails) = Nothing
-                            Dim lastWeightageColumn As Integer = outputXL.GetLastCol(9)
-                            For columnCtr As Integer = 1 To lastWeightageColumn
-                                Dim weightage As String = outputXL.GetData(9, columnCtr)
-                                If weightage IsNot Nothing AndAlso weightage <> "" AndAlso IsNumeric(weightage) Then
-                                    Dim bucket As String = outputXL.GetData(10, columnCtr)
+                                OnHeartbeat(String.Format("Getting Weightage Data for {0} #Pass 1", runningPractice))
+                                Dim weightageData As List(Of WeightageDetails) = Nothing
+                                Dim lastWeightageColumn As Integer = outputXL.GetLastCol(9)
+                                For columnCtr As Integer = 1 To lastWeightageColumn
+                                    Dim weightage As String = outputXL.GetData(9, columnCtr)
+                                    If weightage IsNot Nothing AndAlso weightage <> "" AndAlso IsNumeric(weightage) Then
+                                        Dim bucket As String = outputXL.GetData(10, columnCtr)
 
-                                    Dim wtgDtls As WeightageDetails = New WeightageDetails With {
+                                        Dim wtgDtls As WeightageDetails = New WeightageDetails With {
                                         .Weightage = CDec(weightage) * 100,
                                         .Bucket = bucket,
                                         .ColumnNumber = columnCtr
                                     }
 
-                                    If weightageData Is Nothing Then weightageData = New List(Of WeightageDetails)
-                                    weightageData.Add(wtgDtls)
-                                End If
-                            Next
+                                        If weightageData Is Nothing Then weightageData = New List(Of WeightageDetails)
+                                        weightageData.Add(wtgDtls)
+                                    End If
+                                Next
 
-                            If weightageData IsNot Nothing AndAlso weightageData.Count > 0 Then
-                                OnHeartbeat(String.Format("Opening score file {0} #Pass 1", currentPracticeScoreFile))
-                                Using scoreXL As New ExcelHelper(currentPracticeScoreFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                                    OnHeartbeat(String.Format("Processing for {0} #{1}/{2} #Pass 1", runningPractice, practiceCtr, practiceList.Count))
-                                    Dim practiceEmpDetailsList As IEnumerable(Of EmployeeDetails) = empDetailsList.Where(Function(x)
-                                                                                                                             Return x.Practice.ToUpper = runningPractice.ToUpper AndAlso
+                                If weightageData IsNot Nothing AndAlso weightageData.Count > 0 Then
+                                    OnHeartbeat(String.Format("Opening score file {0} #Pass 1", currentPracticeScoreFile))
+                                    Using scoreXL As New ExcelHelper(currentPracticeScoreFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                        OnHeartbeat(String.Format("Processing for {0} #{1}/{2} #Pass 1", runningPractice, practiceCtr, practiceList.Count))
+                                        Dim practiceEmpDetailsList As IEnumerable(Of EmployeeDetails) = empDetailsList.Where(Function(x)
+                                                                                                                                 Return x.Practice.ToUpper = runningPractice.ToUpper AndAlso
                                                                                                                              x.Sheet.ToUpper = "FOUNDATION".ToUpper
+                                                                                                                             End Function)
+                                        If practiceEmpDetailsList IsNot Nothing AndAlso practiceEmpDetailsList.Count > 0 Then
+                                            Dim empCtr As Integer = 0
+                                            For Each runningEmp In practiceEmpDetailsList
+                                                If runningEmp.Practice.ToUpper = runningPractice.ToUpper Then
+                                                    empCtr += 1
+                                                    OnHeartbeat(String.Format("Processing for {0} #{1}/{2}, #{3}/{4} #Pass 1", runningPractice, practiceCtr, practiceList.Count, empCtr, practiceEmpDetailsList.Count))
+
+                                                    Dim range As String = outputXL.GetNamedRange(12, outputXL.GetLastRow(1), 1, 1)
+                                                    Dim empRowsColumns As List(Of KeyValuePair(Of Integer, Integer)) = outputXL.FindAll(runningEmp.EmpID, range, True)
+                                                    If empRowsColumns IsNot Nothing AndAlso empRowsColumns.Count > 0 Then
+                                                        Dim empRowInOutputFile As Integer = empRowsColumns.FirstOrDefault.Key
+
+                                                        Dim scoreRange As String = scoreXL.GetNamedRange(2, scoreXL.GetLastRow(1), 1, 1)
+                                                        Dim empRowsColumnsScoreFile As List(Of KeyValuePair(Of Integer, Integer)) = scoreXL.FindAll(runningEmp.EmpID, scoreRange, True)
+                                                        If empRowsColumnsScoreFile IsNot Nothing AndAlso empRowsColumnsScoreFile.Count > 0 Then
+                                                            Dim empRowInScore As Integer = empRowsColumnsScoreFile.FirstOrDefault.Key
+
+                                                            Dim wtgCtr As Integer = 0
+                                                            For Each runningWeightage In weightageData.OrderByDescending(Function(x)
+                                                                                                                             Return x.Weightage
                                                                                                                          End Function)
-                                    If practiceEmpDetailsList IsNot Nothing AndAlso practiceEmpDetailsList.Count > 0 Then
-                                        Dim empCtr As Integer = 0
-                                        For Each runningEmp In practiceEmpDetailsList
-                                            If runningEmp.Practice.ToUpper = runningPractice.ToUpper Then
-                                                empCtr += 1
-                                                OnHeartbeat(String.Format("Processing for {0} #{1}/{2}, #{3}/{4} #Pass 1", runningPractice, practiceCtr, practiceList.Count, empCtr, practiceEmpDetailsList.Count))
-
-                                                Dim range As String = outputXL.GetNamedRange(12, outputXL.GetLastRow(1), 1, 1)
-                                                Dim empRowsColumns As List(Of KeyValuePair(Of Integer, Integer)) = outputXL.FindAll(runningEmp.EmpID, range, True)
-                                                If empRowsColumns IsNot Nothing AndAlso empRowsColumns.Count > 0 Then
-                                                    Dim empRowInOutputFile As Integer = empRowsColumns.FirstOrDefault.Key
-
-                                                    Dim wtgCtr As Integer = 0
-                                                    For Each runningWeightage In weightageData.OrderByDescending(Function(x)
-                                                                                                                     Return x.Weightage
-                                                                                                                 End Function)
-                                                        outputXL.SetActiveSheet("Foundation")
-                                                        Dim skillRowNumber As Integer = 11
-                                                        Dim startingColumnNumber As Integer = runningWeightage.ColumnNumber
-                                                        Dim enndingColumnNumber As Integer = startingColumnNumber + 1
-                                                        'Finding next 'BEST SCORE FROM Group' column
-                                                        For colCtr As Integer = startingColumnNumber To outputXL.GetLastCol(skillRowNumber)
-                                                            Dim columnName As String = outputXL.GetData(skillRowNumber, colCtr)
-                                                            If columnName.ToUpper = "BEST SCORE FROM GROUP" Then
-                                                                enndingColumnNumber = colCtr - 1
-                                                                Exit For
-                                                            End If
-                                                        Next
-
-                                                        Dim lastHighestScore As Decimal = Decimal.MinValue
-                                                        Dim lastHighestScoreColumnName As String = Nothing
-                                                        Dim lastHighestScoreColumnNumber As Integer = Integer.MinValue
-                                                        For colCtr As Integer = startingColumnNumber To enndingColumnNumber
-                                                            Dim score As String = outputXL.GetData(empRowInOutputFile, colCtr)
-                                                            If score IsNot Nothing AndAlso IsNumeric(score) Then
-                                                                If CDec(score) > lastHighestScore Then
-                                                                    lastHighestScore = CDec(score)
-                                                                    lastHighestScoreColumnName = outputXL.GetData(skillRowNumber, colCtr)
-                                                                    lastHighestScoreColumnNumber = colCtr
-                                                                End If
-                                                            End If
-                                                        Next
-
-                                                        If lastHighestScoreColumnName IsNot Nothing AndAlso lastHighestScoreColumnNumber <> Integer.MinValue Then
-                                                            'Getting duplicate column count
-                                                            Dim totalDuplicateColumnCount As Integer = 0
-                                                            For colCtr As Integer = lastHighestScoreColumnNumber To 1 Step -1
-                                                                Dim columnName As String = outputXL.GetData(skillRowNumber, colCtr)
-                                                                If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestScoreColumnName.ToUpper Then
-                                                                    totalDuplicateColumnCount += 1
-                                                                End If
-                                                            Next
-                                                            Dim sheetName As String = GetSheetName(lastHighestScoreColumnName)
-                                                            If totalDuplicateColumnCount > 1 Then
-                                                                For ctr As Integer = 1 To totalDuplicateColumnCount - 1
-                                                                    sheetName = String.Format("{0}_1", sheetName)
+                                                                outputXL.SetActiveSheet("Foundation")
+                                                                Dim skillRowNumber As Integer = 11
+                                                                Dim startingColumnNumber As Integer = runningWeightage.ColumnNumber
+                                                                Dim enndingColumnNumber As Integer = startingColumnNumber + 1
+                                                                'Finding next 'BEST SCORE FROM Group' column
+                                                                For colCtr As Integer = startingColumnNumber To outputXL.GetLastCol(skillRowNumber)
+                                                                    Dim columnName As String = outputXL.GetData(skillRowNumber, colCtr)
+                                                                    If columnName.ToUpper = "BEST SCORE FROM GROUP" Then
+                                                                        enndingColumnNumber = colCtr - 1
+                                                                        Exit For
+                                                                    End If
                                                                 Next
-                                                            End If
-                                                            If outputXL.GetExcelSheetsName().Contains(sheetName) Then
-                                                                outputXL.SetActiveSheet(sheetName)
-                                                                Dim maxScoreRange As String = outputXL.GetNamedRange(2, outputXL.GetLastRow(1), 1, 1)
-                                                                Dim empRowsColumnsMaxScoreSheet As List(Of KeyValuePair(Of Integer, Integer)) = outputXL.FindAll(runningEmp.EmpID, maxScoreRange, True)
-                                                                If empRowsColumnsMaxScoreSheet IsNot Nothing AndAlso empRowsColumnsMaxScoreSheet.Count > 0 Then
-                                                                    Dim empRowInMaxScore As Integer = empRowsColumnsMaxScoreSheet.FirstOrDefault.Key
 
-                                                                    Dim lastHighestMaxScore As Decimal = Decimal.MinValue
-                                                                    Dim lastHighestMaxScoreColumnName As String = Nothing
-                                                                    For colCtr As Integer = 3 To outputXL.GetLastCol(empRowInMaxScore)
-                                                                        Dim score As String = outputXL.GetData(empRowInMaxScore, colCtr)
-                                                                        If score IsNot Nothing AndAlso IsNumeric(score) Then
-                                                                            If CDec(score) > lastHighestMaxScore Then
-                                                                                lastHighestMaxScore = CDec(score)
-                                                                                lastHighestMaxScoreColumnName = outputXL.GetData(1, colCtr)
-                                                                            End If
+                                                                Dim lastHighestScore As Decimal = Decimal.MinValue
+                                                                Dim lastHighestScoreColumnName As String = Nothing
+                                                                Dim lastHighestScoreColumnNumber As Integer = Integer.MinValue
+                                                                For colCtr As Integer = startingColumnNumber To enndingColumnNumber
+                                                                    Dim score As String = outputXL.GetData(empRowInOutputFile, colCtr)
+                                                                    If score IsNot Nothing AndAlso IsNumeric(score) Then
+                                                                        If CDec(score) > lastHighestScore Then
+                                                                            lastHighestScore = CDec(score)
+                                                                            lastHighestScoreColumnName = outputXL.GetData(skillRowNumber, colCtr)
+                                                                            lastHighestScoreColumnNumber = colCtr
+                                                                        End If
+                                                                    End If
+                                                                Next
+
+                                                                If lastHighestScoreColumnName IsNot Nothing AndAlso lastHighestScoreColumnNumber <> Integer.MinValue Then
+                                                                    'Getting duplicate column count
+                                                                    Dim totalDuplicateColumnCount As Integer = 0
+                                                                    For colCtr As Integer = lastHighestScoreColumnNumber To 1 Step -1
+                                                                        Dim columnName As String = outputXL.GetData(skillRowNumber, colCtr)
+                                                                        If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestScoreColumnName.ToUpper Then
+                                                                            totalDuplicateColumnCount += 1
                                                                         End If
                                                                     Next
+                                                                    Dim sheetName As String = GetSheetName(lastHighestScoreColumnName)
+                                                                    If totalDuplicateColumnCount > 1 Then
+                                                                        For ctr As Integer = 1 To totalDuplicateColumnCount - 1
+                                                                            sheetName = String.Format("{0}_1", sheetName)
+                                                                        Next
+                                                                    End If
+                                                                    If outputXL.GetExcelSheetsName().Contains(sheetName) Then
+                                                                        outputXL.SetActiveSheet(sheetName)
+                                                                        Dim maxScoreRange As String = outputXL.GetNamedRange(2, outputXL.GetLastRow(1), 1, 1)
+                                                                        Dim empRowsColumnsMaxScoreSheet As List(Of KeyValuePair(Of Integer, Integer)) = outputXL.FindAll(runningEmp.EmpID, maxScoreRange, True)
+                                                                        If empRowsColumnsMaxScoreSheet IsNot Nothing AndAlso empRowsColumnsMaxScoreSheet.Count > 0 Then
+                                                                            Dim empRowInMaxScore As Integer = empRowsColumnsMaxScoreSheet.FirstOrDefault.Key
 
-                                                                    If lastHighestMaxScoreColumnName IsNot Nothing Then
-                                                                        Dim scoreRange As String = scoreXL.GetNamedRange(2, scoreXL.GetLastRow(1), 1, 1)
-                                                                        Dim empRowsColumnsScoreFile As List(Of KeyValuePair(Of Integer, Integer)) = scoreXL.FindAll(runningEmp.EmpID, scoreRange, True)
-                                                                        If empRowsColumnsScoreFile IsNot Nothing AndAlso empRowsColumnsScoreFile.Count > 0 Then
-                                                                            Dim empRowInScore As Integer = empRowsColumnsScoreFile.FirstOrDefault.Key
+                                                                            Dim lastHighestMaxScore As Decimal = Decimal.MinValue
+                                                                            Dim lastHighestMaxScoreColumnName As String = Nothing
+                                                                            For colCtr As Integer = 3 To outputXL.GetLastCol(empRowInMaxScore)
+                                                                                Dim score As String = outputXL.GetData(empRowInMaxScore, colCtr)
+                                                                                If score IsNot Nothing AndAlso IsNumeric(score) Then
+                                                                                    If CDec(score) > lastHighestMaxScore Then
+                                                                                        lastHighestMaxScore = CDec(score)
+                                                                                        lastHighestMaxScoreColumnName = outputXL.GetData(1, colCtr)
+                                                                                    End If
+                                                                                End If
+                                                                            Next
+                                                                            If lastHighestMaxScoreColumnName IsNot Nothing Then
+                                                                                For colctr As Integer = 1 To scoreXL.GetLastCol(1)
+                                                                                    Dim columnName As String = scoreXL.GetData(1, colctr)
+                                                                                    If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestMaxScoreColumnName.ToUpper Then
+                                                                                        Dim score As String = scoreXL.GetData(empRowInScore, colctr)
+                                                                                        Dim currentScore As Decimal = 0
+                                                                                        If score IsNot Nothing AndAlso IsNumeric(score) Then
+                                                                                            currentScore = score
+                                                                                        End If
+                                                                                        If lastHighestMaxScore = 0 Then lastHighestMaxScore = 30
+                                                                                        Dim projectedScore As Decimal = lastHighestMaxScore + lastHighestMaxScore / 2 + 0.1
+                                                                                        If projectedScore > currentScore Then
+                                                                                            If projectedScore > 100 Then projectedScore = 100
 
+                                                                                            scoreXL.SetData(empRowInScore, colctr, projectedScore, "##,##,##0.00", ExcelHelper.XLAlign.Right)
+                                                                                            Exit For
+                                                                                        End If
+                                                                                    End If
+                                                                                Next
+                                                                            Else
+                                                                                OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                                      runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
+                                                                            End If
+                                                                        Else
+                                                                            OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                                      runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
+                                                                        End If
+                                                                    Else
+                                                                        OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
+                                                                                  runningEmp.EmpID, runningPractice, sheetName))
+                                                                    End If
+                                                                Else
+                                                                    OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                                  runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Foundation' sheet"))
+                                                                End If
+
+                                                                wtgCtr += 1
+                                                                If wtgCtr = 2 Then Exit For
+                                                            Next
+                                                        Else
+                                                            OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                                 runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Raw Score' file"))
+                                                        End If
+                                                    Else
+                                                        OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                                   runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Foundation' sheet"))
+                                                    End If
+                                                End If
+                                            Next
+                                        End If
+                                    End Using
+                                End If
+                            End Using
+                        End If
+                        If _ModifyCompleteToITPi Then
+                            'Working on I T Pi
+                            Using outputXL As New ExcelHelper(currentPracticeOutputFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                outputXL.SetActiveSheet("I T Pi")
+
+                                OnHeartbeat(String.Format("Getting Score Columns for {0} #Pass 2", runningPractice))
+                                Dim scoreStartingColumn As Integer = Integer.MinValue
+                                Dim scoreEndingColumn As Integer = Integer.MinValue
+                                For columnCtr As Integer = 1 To outputXL.GetLastCol(10)
+                                    Dim bucket As String = outputXL.GetData(10, columnCtr)
+                                    If bucket IsNot Nothing AndAlso bucket <> "" Then
+                                        If scoreStartingColumn = Integer.MinValue Then scoreStartingColumn = columnCtr
+                                        If bucket.ToUpper = "Foundation Level Proficiency".ToUpper Then
+                                            scoreEndingColumn = columnCtr - 1
+                                            Exit For
+                                        End If
+                                    End If
+                                Next
+
+                                If scoreStartingColumn <> Integer.MinValue AndAlso scoreEndingColumn <> Integer.MinValue Then
+                                    OnHeartbeat(String.Format("Opening score file {0} #Pass 2", currentPracticeScoreFile))
+                                    Using scoreXL As New ExcelHelper(currentPracticeScoreFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                        OnHeartbeat(String.Format("Processing for {0} #{1}/{2} #Pass 2", runningPractice, practiceCtr, practiceList.Count))
+                                        Dim practiceEmpDetailsList As IEnumerable(Of EmployeeDetails) = empDetailsList.Where(Function(x)
+                                                                                                                                 Return x.Practice.ToUpper = runningPractice.ToUpper AndAlso
+                                                                                                                             x.Sheet.ToUpper = "I T PI".ToUpper
+                                                                                                                             End Function)
+                                        If practiceEmpDetailsList IsNot Nothing AndAlso practiceEmpDetailsList.Count > 0 Then
+                                            Dim empCtr As Integer = 0
+                                            For Each runningEmp In practiceEmpDetailsList
+                                                If runningEmp.Practice.ToUpper = runningPractice.ToUpper Then
+                                                    empCtr += 1
+                                                    OnHeartbeat(String.Format("Processing for {0} #{1}/{2}, #{3}/{4} #Pass 2", runningPractice, practiceCtr, practiceList.Count, empCtr, practiceEmpDetailsList.Count))
+
+                                                    Dim range As String = outputXL.GetNamedRange(12, outputXL.GetLastRow(1), 1, 1)
+                                                    Dim empRowsColumns As List(Of KeyValuePair(Of Integer, Integer)) = outputXL.FindAll(runningEmp.EmpID, range, True)
+                                                    If empRowsColumns IsNot Nothing AndAlso empRowsColumns.Count > 0 Then
+                                                        Dim empRowInOutputFile As Integer = empRowsColumns.FirstOrDefault.Key
+
+                                                        Dim scoreRange As String = scoreXL.GetNamedRange(2, scoreXL.GetLastRow(1), 1, 1)
+                                                        Dim empRowsColumnsScoreFile As List(Of KeyValuePair(Of Integer, Integer)) = scoreXL.FindAll(runningEmp.EmpID, scoreRange, True)
+                                                        If empRowsColumnsScoreFile IsNot Nothing AndAlso empRowsColumnsScoreFile.Count > 0 Then
+                                                            Dim empRowInScore As Integer = empRowsColumnsScoreFile.FirstOrDefault.Key
+
+                                                            outputXL.SetActiveSheet("I T Pi")
+                                                            Dim skillRowNumber As Integer = 11
+                                                            Dim lastHighestScoreColumnName As String = Nothing
+                                                            Dim lastHighestScoreColumnNumber As Integer = Integer.MinValue
+                                                            For colCtr As Integer = scoreStartingColumn To scoreEndingColumn
+                                                                Dim score As String = outputXL.GetData(empRowInOutputFile, colCtr)
+                                                                If score IsNot Nothing AndAlso IsNumeric(score) Then
+                                                                    If CDec(score) >= _ModifyCompleteToITPiMinScore Then
+                                                                        lastHighestScoreColumnName = outputXL.GetData(skillRowNumber, colCtr)
+                                                                        lastHighestScoreColumnNumber = colCtr
+                                                                        Exit For
+                                                                    End If
+                                                                End If
+                                                            Next
+
+                                                            If lastHighestScoreColumnName IsNot Nothing AndAlso lastHighestScoreColumnNumber <> Integer.MinValue Then
+                                                                'Getting duplicate column count
+                                                                Dim totalDuplicateColumnCount As Integer = 0
+                                                                outputXL.SetActiveSheet("Foundation")
+                                                                For colCtr As Integer = 1 To outputXL.GetLastCol(skillRowNumber)
+                                                                    Dim columnName As String = outputXL.GetData(skillRowNumber, colCtr)
+                                                                    If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestScoreColumnName.ToUpper Then
+                                                                        totalDuplicateColumnCount += 1
+                                                                    End If
+                                                                Next
+                                                                outputXL.SetActiveSheet("I T Pi")
+                                                                For colCtr As Integer = lastHighestScoreColumnNumber To 1 Step -1
+                                                                    Dim columnName As String = outputXL.GetData(skillRowNumber, colCtr)
+                                                                    If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestScoreColumnName.ToUpper Then
+                                                                        totalDuplicateColumnCount += 1
+                                                                    End If
+                                                                Next
+                                                                Dim sheetName As String = GetSheetName(lastHighestScoreColumnName)
+                                                                If totalDuplicateColumnCount > 1 Then
+                                                                    For ctr As Integer = 1 To totalDuplicateColumnCount - 1
+                                                                        sheetName = String.Format("{0}_1", sheetName)
+                                                                    Next
+                                                                End If
+                                                                If outputXL.GetExcelSheetsName().Contains(sheetName) Then
+                                                                    outputXL.SetActiveSheet(sheetName)
+                                                                    Dim maxScoreRange As String = outputXL.GetNamedRange(2, outputXL.GetLastRow(1), 1, 1)
+                                                                    Dim empRowsColumnsMaxScoreSheet As List(Of KeyValuePair(Of Integer, Integer)) = outputXL.FindAll(runningEmp.EmpID, maxScoreRange, True)
+                                                                    If empRowsColumnsMaxScoreSheet IsNot Nothing AndAlso empRowsColumnsMaxScoreSheet.Count > 0 Then
+                                                                        Dim empRowInMaxScore As Integer = empRowsColumnsMaxScoreSheet.FirstOrDefault.Key
+
+                                                                        Dim lastHighestMaxScore As Decimal = Decimal.MinValue
+                                                                        Dim lastHighestMaxScoreColumnName As String = Nothing
+                                                                        For colCtr As Integer = 3 To outputXL.GetLastCol(empRowInMaxScore)
+                                                                            Dim score As String = outputXL.GetData(empRowInMaxScore, colCtr)
+                                                                            If score IsNot Nothing AndAlso IsNumeric(score) Then
+                                                                                If CDec(score) > lastHighestMaxScore Then
+                                                                                    lastHighestMaxScore = CDec(score)
+                                                                                    lastHighestMaxScoreColumnName = outputXL.GetData(1, colCtr)
+                                                                                End If
+                                                                            End If
+                                                                        Next
+                                                                        If lastHighestMaxScoreColumnName IsNot Nothing Then
                                                                             For colctr As Integer = 1 To scoreXL.GetLastCol(1)
                                                                                 Dim columnName As String = scoreXL.GetData(1, colctr)
                                                                                 If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestMaxScoreColumnName.ToUpper Then
@@ -242,7 +408,7 @@ Public Class ScoreModifier
                                                                                     If score IsNot Nothing AndAlso IsNumeric(score) Then
                                                                                         currentScore = score
                                                                                     End If
-                                                                                    If lastHighestMaxScore = 0 Then lastHighestMaxScore = 30
+                                                                                    If lastHighestMaxScore = 0 Then lastHighestMaxScore = 50
                                                                                     Dim projectedScore As Decimal = lastHighestMaxScore + lastHighestMaxScore / 2 + 0.1
                                                                                     If projectedScore > currentScore Then
                                                                                         If projectedScore > 100 Then projectedScore = 100
@@ -254,187 +420,35 @@ Public Class ScoreModifier
                                                                             Next
                                                                         Else
                                                                             OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                 runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Raw Score' file"))
-                                                                        End If
-                                                                    Else
-                                                                        OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
                                                                                   runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
-                                                                    End If
-                                                                Else
-                                                                    OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                  runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
-                                                                End If
-                                                            Else
-                                                                OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
-                                                                              runningEmp.EmpID, runningPractice, sheetName))
-                                                            End If
-                                                        Else
-                                                            OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                              runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Foundation' sheet"))
-                                                        End If
-
-                                                        wtgCtr += 1
-                                                        If wtgCtr = 2 Then Exit For
-                                                    Next
-                                                Else
-                                                    OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                   runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Foundation' sheet"))
-                                                End If
-                                            End If
-                                        Next
-                                    End If
-                                End Using
-                            End If
-                        End Using
-                        'Working on I T Pi
-                        Using outputXL As New ExcelHelper(currentPracticeOutputFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                            outputXL.SetActiveSheet("I T Pi")
-
-                            OnHeartbeat(String.Format("Getting Score Columns for {0} #Pass 2", runningPractice))
-                            Dim scoreStartingColumn As Integer = Integer.MinValue
-                            Dim scoreEndingColumn As Integer = Integer.MinValue
-                            For columnCtr As Integer = 1 To outputXL.GetLastCol(10)
-                                Dim bucket As String = outputXL.GetData(10, columnCtr)
-                                If bucket IsNot Nothing AndAlso bucket <> "" Then
-                                    If scoreStartingColumn = Integer.MinValue Then scoreStartingColumn = columnCtr
-                                    If bucket.ToUpper = "Foundation Level Proficiency".ToUpper Then
-                                        scoreEndingColumn = columnCtr - 1
-                                        Exit For
-                                    End If
-                                End If
-                            Next
-
-                            If scoreStartingColumn <> Integer.MinValue AndAlso scoreEndingColumn <> Integer.MinValue Then
-                                OnHeartbeat(String.Format("Opening score file {0} #Pass 2", currentPracticeScoreFile))
-                                Using scoreXL As New ExcelHelper(currentPracticeScoreFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                                    OnHeartbeat(String.Format("Processing for {0} #{1}/{2} #Pass 2", runningPractice, practiceCtr, practiceList.Count))
-                                    Dim practiceEmpDetailsList As IEnumerable(Of EmployeeDetails) = empDetailsList.Where(Function(x)
-                                                                                                                             Return x.Practice.ToUpper = runningPractice.ToUpper AndAlso
-                                                                                                                             x.Sheet.ToUpper = "I T PI".ToUpper
-                                                                                                                         End Function)
-                                    If practiceEmpDetailsList IsNot Nothing AndAlso practiceEmpDetailsList.Count > 0 Then
-                                        Dim empCtr As Integer = 0
-                                        For Each runningEmp In practiceEmpDetailsList
-                                            If runningEmp.Practice.ToUpper = runningPractice.ToUpper Then
-                                                empCtr += 1
-                                                OnHeartbeat(String.Format("Processing for {0} #{1}/{2}, #{3}/{4} #Pass 2", runningPractice, practiceCtr, practiceList.Count, empCtr, practiceEmpDetailsList.Count))
-
-                                                Dim range As String = outputXL.GetNamedRange(12, outputXL.GetLastRow(1), 1, 1)
-                                                Dim empRowsColumns As List(Of KeyValuePair(Of Integer, Integer)) = outputXL.FindAll(runningEmp.EmpID, range, True)
-                                                If empRowsColumns IsNot Nothing AndAlso empRowsColumns.Count > 0 Then
-                                                    Dim empRowInOutputFile As Integer = empRowsColumns.FirstOrDefault.Key
-
-                                                    outputXL.SetActiveSheet("I T Pi")
-                                                    Dim skillRowNumber As Integer = 11
-                                                    Dim lastHighestScoreColumnName As String = Nothing
-                                                    Dim lastHighestScoreColumnNumber As Integer = Integer.MinValue
-                                                    For colCtr As Integer = scoreStartingColumn To scoreEndingColumn
-                                                        Dim score As String = outputXL.GetData(empRowInOutputFile, colCtr)
-                                                        If score IsNot Nothing AndAlso IsNumeric(score) Then
-                                                            If CDec(score) >= 55 Then
-                                                                lastHighestScoreColumnName = outputXL.GetData(skillRowNumber, colCtr)
-                                                                lastHighestScoreColumnNumber = colCtr
-                                                                Exit For
-                                                            End If
-                                                        End If
-                                                    Next
-
-                                                    If lastHighestScoreColumnName IsNot Nothing AndAlso lastHighestScoreColumnNumber <> Integer.MinValue Then
-                                                        'Getting duplicate column count
-                                                        Dim totalDuplicateColumnCount As Integer = 0
-                                                        outputXL.SetActiveSheet("Foundation")
-                                                        For colCtr As Integer = 1 To outputXL.GetLastCol(skillRowNumber)
-                                                            Dim columnName As String = outputXL.GetData(skillRowNumber, colCtr)
-                                                            If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestScoreColumnName.ToUpper Then
-                                                                totalDuplicateColumnCount += 1
-                                                            End If
-                                                        Next
-                                                        outputXL.SetActiveSheet("I T Pi")
-                                                        For colCtr As Integer = lastHighestScoreColumnNumber To 1 Step -1
-                                                            Dim columnName As String = outputXL.GetData(skillRowNumber, colCtr)
-                                                            If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestScoreColumnName.ToUpper Then
-                                                                totalDuplicateColumnCount += 1
-                                                            End If
-                                                        Next
-                                                        Dim sheetName As String = GetSheetName(lastHighestScoreColumnName)
-                                                        If totalDuplicateColumnCount > 1 Then
-                                                            For ctr As Integer = 1 To totalDuplicateColumnCount - 1
-                                                                sheetName = String.Format("{0}_1", sheetName)
-                                                            Next
-                                                        End If
-                                                        If outputXL.GetExcelSheetsName().Contains(sheetName) Then
-                                                            outputXL.SetActiveSheet(sheetName)
-                                                            Dim maxScoreRange As String = outputXL.GetNamedRange(2, outputXL.GetLastRow(1), 1, 1)
-                                                            Dim empRowsColumnsMaxScoreSheet As List(Of KeyValuePair(Of Integer, Integer)) = outputXL.FindAll(runningEmp.EmpID, maxScoreRange, True)
-                                                            If empRowsColumnsMaxScoreSheet IsNot Nothing AndAlso empRowsColumnsMaxScoreSheet.Count > 0 Then
-                                                                Dim empRowInMaxScore As Integer = empRowsColumnsMaxScoreSheet.FirstOrDefault.Key
-
-                                                                Dim lastHighestMaxScore As Decimal = Decimal.MinValue
-                                                                Dim lastHighestMaxScoreColumnName As String = Nothing
-                                                                For colCtr As Integer = 3 To outputXL.GetLastCol(empRowInMaxScore)
-                                                                    Dim score As String = outputXL.GetData(empRowInMaxScore, colCtr)
-                                                                    If score IsNot Nothing AndAlso IsNumeric(score) Then
-                                                                        If CDec(score) > lastHighestMaxScore Then
-                                                                            lastHighestMaxScore = CDec(score)
-                                                                            lastHighestMaxScoreColumnName = outputXL.GetData(1, colCtr)
                                                                         End If
-                                                                    End If
-                                                                Next
-
-                                                                If lastHighestMaxScoreColumnName IsNot Nothing Then
-                                                                    Dim scoreRange As String = scoreXL.GetNamedRange(2, scoreXL.GetLastRow(1), 1, 1)
-                                                                    Dim empRowsColumnsScoreFile As List(Of KeyValuePair(Of Integer, Integer)) = scoreXL.FindAll(runningEmp.EmpID, scoreRange, True)
-                                                                    If empRowsColumnsScoreFile IsNot Nothing AndAlso empRowsColumnsScoreFile.Count > 0 Then
-                                                                        Dim empRowInScore As Integer = empRowsColumnsScoreFile.FirstOrDefault.Key
-
-                                                                        For colctr As Integer = 1 To scoreXL.GetLastCol(1)
-                                                                            Dim columnName As String = scoreXL.GetData(1, colctr)
-                                                                            If columnName IsNot Nothing AndAlso columnName.ToUpper = lastHighestMaxScoreColumnName.ToUpper Then
-                                                                                Dim score As String = scoreXL.GetData(empRowInScore, colctr)
-                                                                                Dim currentScore As Decimal = 0
-                                                                                If score IsNot Nothing AndAlso IsNumeric(score) Then
-                                                                                    currentScore = score
-                                                                                End If
-                                                                                If lastHighestMaxScore = 0 Then lastHighestMaxScore = 50
-                                                                                Dim projectedScore As Decimal = lastHighestMaxScore + lastHighestMaxScore / 2 + 0.1
-                                                                                If projectedScore > currentScore Then
-                                                                                    If projectedScore > 100 Then projectedScore = 100
-
-                                                                                    scoreXL.SetData(empRowInScore, colctr, projectedScore, "##,##,##0.00", ExcelHelper.XLAlign.Right)
-                                                                                    Exit For
-                                                                                End If
-                                                                            End If
-                                                                        Next
                                                                     Else
                                                                         OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                             runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Raw Score' file"))
+                                                                                  runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
                                                                     End If
                                                                 Else
-                                                                    OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                              runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
+                                                                    OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
+                                                                              runningEmp.EmpID, runningPractice, sheetName))
                                                                 End If
                                                             Else
                                                                 OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                              runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
+                                                                              runningEmp.EmpID, runningPractice, "Above min Score Not found in 'I T Pi' sheet"))
                                                             End If
                                                         Else
-                                                            OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
-                                                                          runningEmp.EmpID, runningPractice, sheetName))
+                                                            OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                             runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Raw Score' file"))
                                                         End If
                                                     Else
                                                         OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                          runningEmp.EmpID, runningPractice, "Above 55 Score Not found in 'I T Pi' sheet"))
-                                                    End If
-                                                Else
-                                                    OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
                                                                                runningEmp.EmpID, runningPractice, "EMP ID Not found in 'I T Pi' sheet"))
+                                                    End If
                                                 End If
-                                            End If
-                                        Next
-                                    End If
-                                End Using
-                            End If
-                        End Using
+                                            Next
+                                        End If
+                                    End Using
+                                End If
+                            End Using
+                        End If
                         Dim outputFile As String = Path.Combine(_outputDirectoryName, Path.GetFileName(currentPracticeScoreFile))
                         If File.Exists(outputFile) Then File.Delete(outputFile)
                         File.Copy(currentPracticeScoreFile, outputFile)

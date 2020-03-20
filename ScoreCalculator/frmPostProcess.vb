@@ -211,23 +211,7 @@ Public Class frmPostProcess
 
     Private _canceller As CancellationTokenSource
     Private Sub frmPostProcess_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        'txtEmployeeDataFilepath.Text = My.Settings.PostProcessEmployeeFilepath
-        SetObjectEnableDisable_ThreadSafe(grpFileBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
-    End Sub
-
-    Private Sub btnEmpDataBrowse_Click(sender As Object, e As EventArgs) Handles btnEmpDataBrowse.Click
-        opnEmpDataFileDialog.Filter = "|*.xlsx"
-        opnEmpDataFileDialog.ShowDialog()
-    End Sub
-
-    Private Sub opnEmpDataFileDialog_FileOk(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles opnEmpDataFileDialog.FileOk
-        Dim extension As String = Path.GetExtension(opnEmpDataFileDialog.FileName)
-        If extension = ".xlsx" Then
-            txtEmployeeDataFilepath.Text = opnEmpDataFileDialog.FileName
-        Else
-            MsgBox("File Type not supported. Please Try again.", MsgBoxStyle.Critical)
-        End If
     End Sub
 
     Private Sub btnStop_Click(sender As Object, e As EventArgs) Handles btnStop.Click
@@ -235,27 +219,24 @@ Public Class frmPostProcess
     End Sub
 
     Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
-        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
-        For Each runningFile In Directory.GetFiles(directoryName)
-            If runningFile.ToUpper.Contains("BFSI") Then
-                txtEmployeeDataFilepath.Text = runningFile
-            End If
-        Next
-
-        My.Settings.PostProcessEmployeeFilepath = txtEmployeeDataFilepath.Text
-        My.Settings.Save()
         Await StartProcessing.ConfigureAwait(False)
     End Sub
 
     Private Async Function StartProcessing() As Task
-        SetObjectEnableDisable_ThreadSafe(grpFileBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStart, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, True)
         SetLabelText_ThreadSafe(lblError, "Error Status")
         Try
             _canceller = New CancellationTokenSource
-            Dim empFilename As String = GetTextBoxText_ThreadSafe(txtEmployeeDataFilepath)
-            If Not File.Exists(empFilename) Then Throw New ApplicationException("Employee file not exits")
+            Dim empFilename As String = Nothing
+            Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
+            For Each runningFile In Directory.GetFiles(directoryName)
+                If runningFile.ToUpper.Contains("BFSI") Then
+                    empFilename = runningFile
+                End If
+            Next
+            If empFilename Is Nothing Then Throw New ApplicationException("Employee file not exits")
+
             Using pstPrcsHlpr As New PostProcess(_canceller, empFilename)
                 AddHandler pstPrcsHlpr.Heartbeat, AddressOf OnHeartbeat
                 AddHandler pstPrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
@@ -268,7 +249,6 @@ Public Class frmPostProcess
         Catch ex As Exception
             MsgBox(ex.Message, MsgBoxStyle.Critical)
         Finally
-            SetObjectEnableDisable_ThreadSafe(grpFileBrowse, True)
             SetObjectEnableDisable_ThreadSafe(btnStart, True)
             SetObjectEnableDisable_ThreadSafe(btnStop, False)
             OnHeartbeat("Process complete")

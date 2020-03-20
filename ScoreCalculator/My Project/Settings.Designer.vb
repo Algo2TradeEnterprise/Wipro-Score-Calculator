@@ -57,48 +57,12 @@ Namespace My
         <Global.System.Configuration.UserScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
          Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-        Public Property MappingFilePath() As String
-            Get
-                Return CType(Me("MappingFilePath"),String)
-            End Get
-            Set
-                Me("MappingFilePath") = value
-            End Set
-        End Property
-        
-        <Global.System.Configuration.UserScopedSettingAttribute(),  _
-         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-        Public Property EmployeeDataFilePath() As String
-            Get
-                Return CType(Me("EmployeeDataFilePath"),String)
-            End Get
-            Set
-                Me("EmployeeDataFilePath") = value
-            End Set
-        End Property
-        
-        <Global.System.Configuration.UserScopedSettingAttribute(),  _
-         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
         Public Property FolderPath() As String
             Get
                 Return CType(Me("FolderPath"),String)
             End Get
             Set
                 Me("FolderPath") = value
-            End Set
-        End Property
-        
-        <Global.System.Configuration.UserScopedSettingAttribute(),  _
-         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-        Public Property ScoreManagerMapping() As String
-            Get
-                Return CType(Me("ScoreManagerMapping"),String)
-            End Get
-            Set
-                Me("ScoreManagerMapping") = value
             End Set
         End Property
         
@@ -117,6 +81,18 @@ Namespace My
         <Global.System.Configuration.UserScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
          Global.System.Configuration.DefaultSettingValueAttribute("")>  _
+        Public Property ScoreManagerMapping() As String
+            Get
+                Return CType(Me("ScoreManagerMapping"),String)
+            End Get
+            Set
+                Me("ScoreManagerMapping") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
         Public Property ScoreManagerEmp() As String
             Get
                 Return CType(Me("ScoreManagerEmp"),String)
@@ -128,61 +104,73 @@ Namespace My
         
         <Global.System.Configuration.UserScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-        Public Property PreProcessMappingFilepath() As String
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property ZeroScoreReplace() As Boolean
             Get
-                Return CType(Me("PreProcessMappingFilepath"),String)
+                Return CType(Me("ZeroScoreReplace"),Boolean)
             End Get
             Set
-                Me("PreProcessMappingFilepath") = value
+                Me("ZeroScoreReplace") = value
             End Set
         End Property
         
         <Global.System.Configuration.UserScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-        Public Property PostProcessEmployeeFilepath() As String
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property MaxScoreReplace() As Boolean
             Get
-                Return CType(Me("PostProcessEmployeeFilepath"),String)
+                Return CType(Me("MaxScoreReplace"),Boolean)
             End Get
             Set
-                Me("PostProcessEmployeeFilepath") = value
+                Me("MaxScoreReplace") = value
             End Set
         End Property
         
         <Global.System.Configuration.UserScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-        Public Property ASGFilePath() As String
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property FoundationPendingToComplete() As Boolean
             Get
-                Return CType(Me("ASGFilePath"),String)
+                Return CType(Me("FoundationPendingToComplete"),Boolean)
             End Get
             Set
-                Me("ASGFilePath") = value
+                Me("FoundationPendingToComplete") = value
             End Set
         End Property
         
         <Global.System.Configuration.UserScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-        Public Property ScoreModifierFolder() As String
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property FoundationCompleteToITPi() As Boolean
             Get
-                Return CType(Me("ScoreModifierFolder"),String)
+                Return CType(Me("FoundationCompleteToITPi"),Boolean)
             End Get
             Set
-                Me("ScoreModifierFolder") = value
+                Me("FoundationCompleteToITPi") = value
             End Set
         End Property
         
         <Global.System.Configuration.UserScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("")>  _
-        Public Property ScoreModifierEmpListFile() As String
+         Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
+        Public Property FoundationPendingToCompleteMinScore() As Decimal
             Get
-                Return CType(Me("ScoreModifierEmpListFile"),String)
+                Return CType(Me("FoundationPendingToCompleteMinScore"),Decimal)
             End Get
             Set
-                Me("ScoreModifierEmpListFile") = value
+                Me("FoundationPendingToCompleteMinScore") = value
+            End Set
+        End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("0")>  _
+        Public Property FoundationCompleteToITPiMinScore() As Decimal
+            Get
+                Return CType(Me("FoundationCompleteToITPiMinScore"),Decimal)
+            End Get
+            Set
+                Me("FoundationCompleteToITPiMinScore") = value
             End Set
         End Property
     End Class

@@ -142,6 +142,10 @@ Public Class InProcess
                     Next
                 End If
             End Using
+
+            Dim empOutputFile As String = Path.Combine(_outputDirectoryName, Path.GetFileName(_employeeFile))
+            If File.Exists(empOutputFile) Then File.Delete(empOutputFile)
+            File.Copy(_employeeFile, empOutputFile)
         Else
             Throw New ApplicationException("Employee file missing")
         End If

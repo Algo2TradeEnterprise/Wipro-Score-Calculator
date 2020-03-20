@@ -210,53 +210,7 @@ Public Class frmInProcess
 
     Private _canceller As CancellationTokenSource
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        'txtMappingFilepath.Text = My.Settings.MappingFilePath
-        'txtEmployeeDataFilepath.Text = My.Settings.EmployeeDataFilePath
-        'txtASGDataFilepath.Text = My.Settings.ASGFilePath
-        SetObjectEnableDisable_ThreadSafe(grpFileBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
-    End Sub
-
-    Private Sub btnMappingFileBrowse_Click(sender As Object, e As EventArgs) Handles btnMappingFileBrowse.Click
-        opnMappingFileDialog.Filter = "|*.xlsx"
-        opnMappingFileDialog.ShowDialog()
-    End Sub
-
-    Private Sub opnMappingFileDialog_FileOk(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles opnMappingFileDialog.FileOk
-        Dim extension As String = Path.GetExtension(opnMappingFileDialog.FileName)
-        If extension = ".xlsx" Then
-            txtMappingFilepath.Text = opnMappingFileDialog.FileName
-        Else
-            MsgBox("File Type not supported. Please Try again.", MsgBoxStyle.Critical)
-        End If
-    End Sub
-
-    Private Sub btnEmpDataBrowse_Click(sender As Object, e As EventArgs) Handles btnEmpDataBrowse.Click
-        opnEmpDataFileDialog.Filter = "|*.xlsx"
-        opnEmpDataFileDialog.ShowDialog()
-    End Sub
-
-    Private Sub opnEmpDataFileDialog_FileOk(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles opnEmpDataFileDialog.FileOk
-        Dim extension As String = Path.GetExtension(opnEmpDataFileDialog.FileName)
-        If extension = ".xlsx" Then
-            txtEmployeeDataFilepath.Text = opnEmpDataFileDialog.FileName
-        Else
-            MsgBox("File Type not supported. Please Try again.", MsgBoxStyle.Critical)
-        End If
-    End Sub
-
-    Private Sub btnASGDataBrowse_Click(sender As Object, e As EventArgs) Handles btnASGDataBrowse.Click
-        opnASGDataFileDialog.Filter = "|*.xlsx"
-        opnASGDataFileDialog.ShowDialog()
-    End Sub
-
-    Private Sub opnASGDataFileDialog_FileOk(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles opnASGDataFileDialog.FileOk
-        Dim extension As String = Path.GetExtension(opnASGDataFileDialog.FileName)
-        If extension = ".xlsx" Then
-            txtASGDataFilepath.Text = opnASGDataFileDialog.FileName
-        Else
-            MsgBox("File Type not supported. Please Try again.", MsgBoxStyle.Critical)
-        End If
     End Sub
 
     Private Sub btnStop_Click(sender As Object, e As EventArgs) Handles btnStop.Click
@@ -264,36 +218,31 @@ Public Class frmInProcess
     End Sub
 
     Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
-        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "In Process")
-        For Each runningFile In Directory.GetFiles(directoryName)
-            If runningFile.ToUpper.Contains("MAPPING") Then
-                txtMappingFilepath.Text = runningFile
-            ElseIf runningFile.ToUpper.Contains("BFSI") Then
-                txtEmployeeDataFilepath.Text = runningFile
-            ElseIf runningFile.ToUpper.Contains("ASG") Then
-                txtASGDataFilepath.Text = runningFile
-            End If
-        Next
-
-        My.Settings.MappingFilePath = txtMappingFilepath.Text
-        My.Settings.EmployeeDataFilePath = txtEmployeeDataFilepath.Text
-        My.Settings.ASGFilePath = txtASGDataFilepath.Text
-        My.Settings.Save()
         Await StartProcessing.ConfigureAwait(False)
     End Sub
 
     Private Async Function StartProcessing() As Task
-        SetObjectEnableDisable_ThreadSafe(grpFileBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStart, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, True)
         SetLabelText_ThreadSafe(lblError, "Error Status")
         Try
             _canceller = New CancellationTokenSource
-            Dim mappingFilename As String = GetTextBoxText_ThreadSafe(txtMappingFilepath)
-            Dim empFilename As String = GetTextBoxText_ThreadSafe(txtEmployeeDataFilepath)
-            Dim asgFilename As String = GetTextBoxText_ThreadSafe(txtASGDataFilepath)
-            If Not File.Exists(mappingFilename) Then Throw New ApplicationException("Mapping file not exits")
-            If Not File.Exists(empFilename) Then Throw New ApplicationException("Employee file not exits")
+            Dim mappingFilename As String = Nothing
+            Dim empFilename As String = Nothing
+            Dim asgFilename As String = Nothing
+            Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "In Process")
+            For Each runningFile In Directory.GetFiles(directoryName)
+                If runningFile.ToUpper.Contains("MAPPING") Then
+                    mappingFilename = runningFile
+                ElseIf runningFile.ToUpper.Contains("BFSI") Then
+                    empFilename = runningFile
+                ElseIf runningFile.ToUpper.Contains("ASG") Then
+                    asgFilename = runningFile
+                End If
+            Next
+
+            If mappingFilename Is Nothing Then Throw New ApplicationException("Mapping file not exits")
+            If empFilename Is Nothing Then Throw New ApplicationException("Employee file not exits")
             Using inPrcsHlpr As New InProcess(_canceller, mappingFilename, empFilename, asgFilename)
                 AddHandler inPrcsHlpr.Heartbeat, AddressOf OnHeartbeat
                 AddHandler inPrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
@@ -306,7 +255,6 @@ Public Class frmInProcess
         Catch ex As Exception
             MsgBox(ex.Message, MsgBoxStyle.Critical)
         Finally
-            SetObjectEnableDisable_ThreadSafe(grpFileBrowse, True)
             SetObjectEnableDisable_ThreadSafe(btnStart, True)
             SetObjectEnableDisable_ThreadSafe(btnStop, False)
             OnHeartbeat("Process complete")

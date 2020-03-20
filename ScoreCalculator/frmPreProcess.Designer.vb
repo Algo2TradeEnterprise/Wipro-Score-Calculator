@@ -30,23 +30,27 @@ Partial Class frmPreProcess
         Me.txtFolderpath = New System.Windows.Forms.TextBox()
         Me.lblMappingFIle = New System.Windows.Forms.Label()
         Me.grpFolderBrowse = New System.Windows.Forms.GroupBox()
-        Me.btnMappingFileBrowse = New System.Windows.Forms.Button()
-        Me.txtMappingFilepath = New System.Windows.Forms.TextBox()
-        Me.Label1 = New System.Windows.Forms.Label()
         Me.lblProgress = New System.Windows.Forms.Label()
         Me.Panel4 = New System.Windows.Forms.Panel()
         Me.Panel3 = New System.Windows.Forms.Panel()
         Me.btnStop = New System.Windows.Forms.Button()
         Me.folderBrowse = New System.Windows.Forms.FolderBrowserDialog()
-        Me.lblError = New System.Windows.Forms.Label()
-        Me.opnMappingFileDialog = New System.Windows.Forms.OpenFileDialog()
+        Me.lstError = New System.Windows.Forms.ListBox()
+        Me.chkbZeroScoreReplacement = New System.Windows.Forms.CheckBox()
+        Me.chkbMaxScoreReplacement = New System.Windows.Forms.CheckBox()
+        Me.chkbITPi = New System.Windows.Forms.CheckBox()
+        Me.chkbFndtnCmplt = New System.Windows.Forms.CheckBox()
+        Me.lblFndtnCmplt = New System.Windows.Forms.Label()
+        Me.lblITPi = New System.Windows.Forms.Label()
+        Me.txtFndtnCmplt = New System.Windows.Forms.TextBox()
+        Me.txtITPi = New System.Windows.Forms.TextBox()
         Me.grpFolderBrowse.SuspendLayout()
         Me.SuspendLayout()
         '
         'btnStart
         '
         Me.btnStart.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.btnStart.Location = New System.Drawing.Point(705, 32)
+        Me.btnStart.Location = New System.Drawing.Point(884, 35)
         Me.btnStart.Margin = New System.Windows.Forms.Padding(4)
         Me.btnStart.Name = "btnStart"
         Me.btnStart.Size = New System.Drawing.Size(100, 34)
@@ -60,7 +64,7 @@ Partial Class frmPreProcess
         Me.Panel2.Location = New System.Drawing.Point(14, 1)
         Me.Panel2.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel2.Name = "Panel2"
-        Me.Panel2.Size = New System.Drawing.Size(811, 12)
+        Me.Panel2.Size = New System.Drawing.Size(991, 12)
         Me.Panel2.TabIndex = 10
         '
         'Panel1
@@ -69,12 +73,12 @@ Partial Class frmPreProcess
         Me.Panel1.Location = New System.Drawing.Point(1, 1)
         Me.Panel1.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel1.Name = "Panel1"
-        Me.Panel1.Size = New System.Drawing.Size(13, 469)
+        Me.Panel1.Size = New System.Drawing.Size(13, 427)
         Me.Panel1.TabIndex = 9
         '
         'btnBrowse
         '
-        Me.btnBrowse.Location = New System.Drawing.Point(572, 23)
+        Me.btnBrowse.Location = New System.Drawing.Point(746, 23)
         Me.btnBrowse.Margin = New System.Windows.Forms.Padding(4)
         Me.btnBrowse.Name = "btnBrowse"
         Me.btnBrowse.Size = New System.Drawing.Size(100, 28)
@@ -84,11 +88,10 @@ Partial Class frmPreProcess
         '
         'txtFolderpath
         '
-        Me.txtFolderpath.Location = New System.Drawing.Point(123, 25)
+        Me.txtFolderpath.Location = New System.Drawing.Point(97, 25)
         Me.txtFolderpath.Margin = New System.Windows.Forms.Padding(4)
         Me.txtFolderpath.Name = "txtFolderpath"
-        Me.txtFolderpath.ReadOnly = True
-        Me.txtFolderpath.Size = New System.Drawing.Size(444, 22)
+        Me.txtFolderpath.Size = New System.Drawing.Size(641, 22)
         Me.txtFolderpath.TabIndex = 1
         '
         'lblMappingFIle
@@ -103,9 +106,14 @@ Partial Class frmPreProcess
         '
         'grpFolderBrowse
         '
-        Me.grpFolderBrowse.Controls.Add(Me.btnMappingFileBrowse)
-        Me.grpFolderBrowse.Controls.Add(Me.txtMappingFilepath)
-        Me.grpFolderBrowse.Controls.Add(Me.Label1)
+        Me.grpFolderBrowse.Controls.Add(Me.txtITPi)
+        Me.grpFolderBrowse.Controls.Add(Me.txtFndtnCmplt)
+        Me.grpFolderBrowse.Controls.Add(Me.lblITPi)
+        Me.grpFolderBrowse.Controls.Add(Me.lblFndtnCmplt)
+        Me.grpFolderBrowse.Controls.Add(Me.chkbITPi)
+        Me.grpFolderBrowse.Controls.Add(Me.chkbFndtnCmplt)
+        Me.grpFolderBrowse.Controls.Add(Me.chkbMaxScoreReplacement)
+        Me.grpFolderBrowse.Controls.Add(Me.chkbZeroScoreReplacement)
         Me.grpFolderBrowse.Controls.Add(Me.btnBrowse)
         Me.grpFolderBrowse.Controls.Add(Me.txtFolderpath)
         Me.grpFolderBrowse.Controls.Add(Me.lblMappingFIle)
@@ -113,71 +121,42 @@ Partial Class frmPreProcess
         Me.grpFolderBrowse.Margin = New System.Windows.Forms.Padding(4)
         Me.grpFolderBrowse.Name = "grpFolderBrowse"
         Me.grpFolderBrowse.Padding = New System.Windows.Forms.Padding(4)
-        Me.grpFolderBrowse.Size = New System.Drawing.Size(676, 106)
+        Me.grpFolderBrowse.Size = New System.Drawing.Size(855, 119)
         Me.grpFolderBrowse.TabIndex = 8
         Me.grpFolderBrowse.TabStop = False
-        Me.grpFolderBrowse.Text = "Choose Folder"
-        '
-        'btnMappingFileBrowse
-        '
-        Me.btnMappingFileBrowse.Location = New System.Drawing.Point(570, 63)
-        Me.btnMappingFileBrowse.Margin = New System.Windows.Forms.Padding(4)
-        Me.btnMappingFileBrowse.Name = "btnMappingFileBrowse"
-        Me.btnMappingFileBrowse.Size = New System.Drawing.Size(100, 28)
-        Me.btnMappingFileBrowse.TabIndex = 5
-        Me.btnMappingFileBrowse.Text = "Browse"
-        Me.btnMappingFileBrowse.UseVisualStyleBackColor = True
-        '
-        'txtMappingFilepath
-        '
-        Me.txtMappingFilepath.Location = New System.Drawing.Point(121, 65)
-        Me.txtMappingFilepath.Margin = New System.Windows.Forms.Padding(4)
-        Me.txtMappingFilepath.Name = "txtMappingFilepath"
-        Me.txtMappingFilepath.ReadOnly = True
-        Me.txtMappingFilepath.Size = New System.Drawing.Size(444, 22)
-        Me.txtMappingFilepath.TabIndex = 4
-        '
-        'Label1
-        '
-        Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(6, 69)
-        Me.Label1.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
-        Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(88, 17)
-        Me.Label1.TabIndex = 3
-        Me.Label1.Text = "Mapping File"
+        Me.grpFolderBrowse.Text = "Settings"
         '
         'lblProgress
         '
-        Me.lblProgress.Location = New System.Drawing.Point(21, 127)
+        Me.lblProgress.Location = New System.Drawing.Point(21, 140)
         Me.lblProgress.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.lblProgress.Name = "lblProgress"
-        Me.lblProgress.Size = New System.Drawing.Size(786, 71)
+        Me.lblProgress.Size = New System.Drawing.Size(963, 71)
         Me.lblProgress.TabIndex = 15
         Me.lblProgress.Text = "Progress Status"
         '
         'Panel4
         '
         Me.Panel4.BackColor = System.Drawing.Color.Black
-        Me.Panel4.Location = New System.Drawing.Point(1, 458)
+        Me.Panel4.Location = New System.Drawing.Point(1, 416)
         Me.Panel4.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel4.Name = "Panel4"
-        Me.Panel4.Size = New System.Drawing.Size(826, 12)
+        Me.Panel4.Size = New System.Drawing.Size(1004, 12)
         Me.Panel4.TabIndex = 14
         '
         'Panel3
         '
         Me.Panel3.BackColor = System.Drawing.Color.Black
-        Me.Panel3.Location = New System.Drawing.Point(816, 1)
+        Me.Panel3.Location = New System.Drawing.Point(992, 1)
         Me.Panel3.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel3.Name = "Panel3"
-        Me.Panel3.Size = New System.Drawing.Size(13, 469)
+        Me.Panel3.Size = New System.Drawing.Size(13, 427)
         Me.Panel3.TabIndex = 13
         '
         'btnStop
         '
         Me.btnStop.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.btnStop.Location = New System.Drawing.Point(705, 73)
+        Me.btnStop.Location = New System.Drawing.Point(884, 80)
         Me.btnStop.Margin = New System.Windows.Forms.Padding(4)
         Me.btnStop.Name = "btnStop"
         Me.btnStop.Size = New System.Drawing.Size(100, 34)
@@ -185,25 +164,96 @@ Partial Class frmPreProcess
         Me.btnStop.Text = "Stop"
         Me.btnStop.UseVisualStyleBackColor = True
         '
-        'lblError
+        'lstError
         '
-        Me.lblError.Location = New System.Drawing.Point(22, 198)
-        Me.lblError.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
-        Me.lblError.Name = "lblError"
-        Me.lblError.Size = New System.Drawing.Size(786, 256)
-        Me.lblError.TabIndex = 16
-        Me.lblError.Text = "Error Status"
+        Me.lstError.ForeColor = System.Drawing.Color.FromArgb(CType(CType(29, Byte), Integer), CType(CType(29, Byte), Integer), CType(CType(29, Byte), Integer))
+        Me.lstError.FormattingEnabled = True
+        Me.lstError.ItemHeight = 16
+        Me.lstError.Location = New System.Drawing.Point(21, 216)
+        Me.lstError.Margin = New System.Windows.Forms.Padding(4)
+        Me.lstError.Name = "lstError"
+        Me.lstError.Size = New System.Drawing.Size(963, 196)
+        Me.lstError.TabIndex = 28
         '
-        'opnMappingFileDialog
+        'chkbZeroScoreReplacement
         '
+        Me.chkbZeroScoreReplacement.AutoSize = True
+        Me.chkbZeroScoreReplacement.Location = New System.Drawing.Point(11, 63)
+        Me.chkbZeroScoreReplacement.Name = "chkbZeroScoreReplacement"
+        Me.chkbZeroScoreReplacement.Size = New System.Drawing.Size(188, 21)
+        Me.chkbZeroScoreReplacement.TabIndex = 3
+        Me.chkbZeroScoreReplacement.Text = "Zero Score Replacement"
+        Me.chkbZeroScoreReplacement.UseVisualStyleBackColor = True
+        '
+        'chkbMaxScoreReplacement
+        '
+        Me.chkbMaxScoreReplacement.AutoSize = True
+        Me.chkbMaxScoreReplacement.Location = New System.Drawing.Point(11, 91)
+        Me.chkbMaxScoreReplacement.Name = "chkbMaxScoreReplacement"
+        Me.chkbMaxScoreReplacement.Size = New System.Drawing.Size(183, 21)
+        Me.chkbMaxScoreReplacement.TabIndex = 4
+        Me.chkbMaxScoreReplacement.Text = "Max Score Replacement"
+        Me.chkbMaxScoreReplacement.UseVisualStyleBackColor = True
+        '
+        'chkbITPi
+        '
+        Me.chkbITPi.AutoSize = True
+        Me.chkbITPi.Location = New System.Drawing.Point(237, 91)
+        Me.chkbITPi.Name = "chkbITPi"
+        Me.chkbITPi.Size = New System.Drawing.Size(217, 21)
+        Me.chkbITPi.TabIndex = 6
+        Me.chkbITPi.Text = "Foundation Complete -> I T Pi"
+        Me.chkbITPi.UseVisualStyleBackColor = True
+        '
+        'chkbFndtnCmplt
+        '
+        Me.chkbFndtnCmplt.AutoSize = True
+        Me.chkbFndtnCmplt.Location = New System.Drawing.Point(237, 63)
+        Me.chkbFndtnCmplt.Name = "chkbFndtnCmplt"
+        Me.chkbFndtnCmplt.Size = New System.Drawing.Size(312, 21)
+        Me.chkbFndtnCmplt.TabIndex = 5
+        Me.chkbFndtnCmplt.Text = "Foundation Pending -> Foundation Complete"
+        Me.chkbFndtnCmplt.UseVisualStyleBackColor = True
+        '
+        'lblFndtnCmplt
+        '
+        Me.lblFndtnCmplt.AutoSize = True
+        Me.lblFndtnCmplt.Location = New System.Drawing.Point(563, 64)
+        Me.lblFndtnCmplt.Name = "lblFndtnCmplt"
+        Me.lblFndtnCmplt.Size = New System.Drawing.Size(75, 17)
+        Me.lblFndtnCmplt.TabIndex = 7
+        Me.lblFndtnCmplt.Text = "Min Score:"
+        '
+        'lblITPi
+        '
+        Me.lblITPi.AutoSize = True
+        Me.lblITPi.Location = New System.Drawing.Point(563, 92)
+        Me.lblITPi.Name = "lblITPi"
+        Me.lblITPi.Size = New System.Drawing.Size(75, 17)
+        Me.lblITPi.TabIndex = 8
+        Me.lblITPi.Text = "Min Score:"
+        '
+        'txtFndtnCmplt
+        '
+        Me.txtFndtnCmplt.Location = New System.Drawing.Point(645, 62)
+        Me.txtFndtnCmplt.Name = "txtFndtnCmplt"
+        Me.txtFndtnCmplt.Size = New System.Drawing.Size(100, 22)
+        Me.txtFndtnCmplt.TabIndex = 9
+        '
+        'txtITPi
+        '
+        Me.txtITPi.Location = New System.Drawing.Point(645, 90)
+        Me.txtITPi.Name = "txtITPi"
+        Me.txtITPi.Size = New System.Drawing.Size(100, 22)
+        Me.txtITPi.TabIndex = 10
         '
         'frmPreProcess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(830, 470)
+        Me.ClientSize = New System.Drawing.Size(1007, 431)
+        Me.Controls.Add(Me.lstError)
         Me.Controls.Add(Me.Panel4)
-        Me.Controls.Add(Me.lblError)
         Me.Controls.Add(Me.btnStart)
         Me.Controls.Add(Me.Panel2)
         Me.Controls.Add(Me.Panel1)
@@ -234,9 +284,13 @@ Partial Class frmPreProcess
     Friend WithEvents Panel3 As Panel
     Friend WithEvents btnStop As Button
     Friend WithEvents folderBrowse As FolderBrowserDialog
-    Friend WithEvents lblError As Label
-    Friend WithEvents btnMappingFileBrowse As Button
-    Friend WithEvents txtMappingFilepath As TextBox
-    Friend WithEvents Label1 As Label
-    Friend WithEvents opnMappingFileDialog As OpenFileDialog
+    Friend WithEvents lstError As ListBox
+    Friend WithEvents chkbMaxScoreReplacement As CheckBox
+    Friend WithEvents chkbZeroScoreReplacement As CheckBox
+    Friend WithEvents txtITPi As TextBox
+    Friend WithEvents txtFndtnCmplt As TextBox
+    Friend WithEvents lblITPi As Label
+    Friend WithEvents lblFndtnCmplt As Label
+    Friend WithEvents chkbITPi As CheckBox
+    Friend WithEvents chkbFndtnCmplt As CheckBox
 End Class
