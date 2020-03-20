@@ -46,11 +46,14 @@ Public Class ScoreModifier
     Private ReadOnly _cts As CancellationTokenSource
     Private ReadOnly _directoryName As String
     Private ReadOnly _employeeListFileName As String
+    Private ReadOnly _outputDirectoryName As String
 
     Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryPath As String, ByVal empFileName As String)
         _cts = canceller
         _directoryName = directoryPath
         _employeeListFileName = empFileName
+
+        _outputDirectoryName = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
     End Sub
 
     Public Async Function ProcessDataAsync() As Task
@@ -432,6 +435,9 @@ Public Class ScoreModifier
                                 End Using
                             End If
                         End Using
+                        Dim outputFile As String = Path.Combine(_outputDirectoryName, Path.GetFileName(currentPracticeScoreFile))
+                        If File.Exists(outputFile) Then File.Delete(outputFile)
+                        File.Copy(currentPracticeScoreFile, outputFile)
                     End If
                 Next
             End If

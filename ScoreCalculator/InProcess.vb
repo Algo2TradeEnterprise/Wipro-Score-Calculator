@@ -59,6 +59,7 @@ Public Class InProcess
     Private _totalRow As Integer
     Private _pivotDataSheet As String
     Private ReadOnly _dataStartingRow As Integer = 11
+    Private ReadOnly _outputDirectoryName As String
 
     Public Sub New(ByVal canceller As CancellationTokenSource, ByVal mappingFile As String, ByVal employeeFile As String, ByVal asgFile As String)
         _cts = canceller
@@ -66,6 +67,9 @@ Public Class InProcess
         _employeeFile = employeeFile
         _asgFile = asgFile
         _directoryName = Path.GetDirectoryName(_employeeFile)
+
+        _outputDirectoryName = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
+
         _cmn = New Common(_cts)
         mappingFileSchema = New Dictionary(Of String, String) From
             {{"WFT Practice", "WFT Practice"},
@@ -610,6 +614,9 @@ Public Class InProcess
 
                                         outputExcel.SaveExcel()
                                     End Using
+                                    Dim outputFile As String = Path.Combine(_outputDirectoryName, Path.GetFileName(skillOutputFileName))
+                                    If File.Exists(outputFile) Then File.Delete(outputFile)
+                                    File.Copy(skillOutputFileName, outputFile)
                                 End If
                             Else
                                 If scoreFilename Is Nothing Then OnHeartbeatError(String.Format("Score File not exists for {0}", skillName))
