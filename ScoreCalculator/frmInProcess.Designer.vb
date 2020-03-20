@@ -26,13 +26,6 @@ Partial Class frmInProcess
         Me.btnStart = New System.Windows.Forms.Button()
         Me.Panel2 = New System.Windows.Forms.Panel()
         Me.Panel1 = New System.Windows.Forms.Panel()
-        Me.lblMappingFIle = New System.Windows.Forms.Label()
-        Me.txtMappingFilepath = New System.Windows.Forms.TextBox()
-        Me.btnMappingFileBrowse = New System.Windows.Forms.Button()
-        Me.grpFileBrowse = New System.Windows.Forms.GroupBox()
-        Me.btnEmpDataBrowse = New System.Windows.Forms.Button()
-        Me.txtEmployeeDataFilepath = New System.Windows.Forms.TextBox()
-        Me.lblEmployeeData = New System.Windows.Forms.Label()
         Me.btnStop = New System.Windows.Forms.Button()
         Me.Panel3 = New System.Windows.Forms.Panel()
         Me.Panel4 = New System.Windows.Forms.Panel()
@@ -40,10 +33,17 @@ Partial Class frmInProcess
         Me.opnMappingFileDialog = New System.Windows.Forms.OpenFileDialog()
         Me.opnEmpDataFileDialog = New System.Windows.Forms.OpenFileDialog()
         Me.lblError = New System.Windows.Forms.Label()
-        Me.btnASGDataBrowse = New System.Windows.Forms.Button()
-        Me.txtASGDataFilepath = New System.Windows.Forms.TextBox()
-        Me.lblASGDaata = New System.Windows.Forms.Label()
         Me.opnASGDataFileDialog = New System.Windows.Forms.OpenFileDialog()
+        Me.lblMappingFIle = New System.Windows.Forms.Label()
+        Me.txtMappingFilepath = New System.Windows.Forms.TextBox()
+        Me.btnMappingFileBrowse = New System.Windows.Forms.Button()
+        Me.lblEmployeeData = New System.Windows.Forms.Label()
+        Me.txtEmployeeDataFilepath = New System.Windows.Forms.TextBox()
+        Me.btnEmpDataBrowse = New System.Windows.Forms.Button()
+        Me.lblASGDaata = New System.Windows.Forms.Label()
+        Me.txtASGDataFilepath = New System.Windows.Forms.TextBox()
+        Me.btnASGDataBrowse = New System.Windows.Forms.Button()
+        Me.grpFileBrowse = New System.Windows.Forms.GroupBox()
         Me.grpFileBrowse.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -75,84 +75,6 @@ Partial Class frmInProcess
         Me.Panel1.Name = "Panel1"
         Me.Panel1.Size = New System.Drawing.Size(13, 389)
         Me.Panel1.TabIndex = 1
-        '
-        'lblMappingFIle
-        '
-        Me.lblMappingFIle.AutoSize = True
-        Me.lblMappingFIle.Location = New System.Drawing.Point(8, 26)
-        Me.lblMappingFIle.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
-        Me.lblMappingFIle.Name = "lblMappingFIle"
-        Me.lblMappingFIle.Size = New System.Drawing.Size(88, 17)
-        Me.lblMappingFIle.TabIndex = 0
-        Me.lblMappingFIle.Text = "Mapping File"
-        '
-        'txtMappingFilepath
-        '
-        Me.txtMappingFilepath.Location = New System.Drawing.Point(123, 22)
-        Me.txtMappingFilepath.Margin = New System.Windows.Forms.Padding(4)
-        Me.txtMappingFilepath.Name = "txtMappingFilepath"
-        Me.txtMappingFilepath.ReadOnly = True
-        Me.txtMappingFilepath.Size = New System.Drawing.Size(444, 22)
-        Me.txtMappingFilepath.TabIndex = 1
-        '
-        'btnMappingFileBrowse
-        '
-        Me.btnMappingFileBrowse.Location = New System.Drawing.Point(572, 20)
-        Me.btnMappingFileBrowse.Margin = New System.Windows.Forms.Padding(4)
-        Me.btnMappingFileBrowse.Name = "btnMappingFileBrowse"
-        Me.btnMappingFileBrowse.Size = New System.Drawing.Size(100, 28)
-        Me.btnMappingFileBrowse.TabIndex = 2
-        Me.btnMappingFileBrowse.Text = "Browse"
-        Me.btnMappingFileBrowse.UseVisualStyleBackColor = True
-        '
-        'grpFileBrowse
-        '
-        Me.grpFileBrowse.Controls.Add(Me.btnASGDataBrowse)
-        Me.grpFileBrowse.Controls.Add(Me.txtASGDataFilepath)
-        Me.grpFileBrowse.Controls.Add(Me.lblASGDaata)
-        Me.grpFileBrowse.Controls.Add(Me.btnEmpDataBrowse)
-        Me.grpFileBrowse.Controls.Add(Me.txtEmployeeDataFilepath)
-        Me.grpFileBrowse.Controls.Add(Me.lblEmployeeData)
-        Me.grpFileBrowse.Controls.Add(Me.btnMappingFileBrowse)
-        Me.grpFileBrowse.Controls.Add(Me.txtMappingFilepath)
-        Me.grpFileBrowse.Controls.Add(Me.lblMappingFIle)
-        Me.grpFileBrowse.Location = New System.Drawing.Point(19, 16)
-        Me.grpFileBrowse.Margin = New System.Windows.Forms.Padding(4)
-        Me.grpFileBrowse.Name = "grpFileBrowse"
-        Me.grpFileBrowse.Padding = New System.Windows.Forms.Padding(4)
-        Me.grpFileBrowse.Size = New System.Drawing.Size(676, 167)
-        Me.grpFileBrowse.TabIndex = 0
-        Me.grpFileBrowse.TabStop = False
-        Me.grpFileBrowse.Text = "Choose File"
-        '
-        'btnEmpDataBrowse
-        '
-        Me.btnEmpDataBrowse.Location = New System.Drawing.Point(572, 66)
-        Me.btnEmpDataBrowse.Margin = New System.Windows.Forms.Padding(4)
-        Me.btnEmpDataBrowse.Name = "btnEmpDataBrowse"
-        Me.btnEmpDataBrowse.Size = New System.Drawing.Size(100, 28)
-        Me.btnEmpDataBrowse.TabIndex = 5
-        Me.btnEmpDataBrowse.Text = "Browse"
-        Me.btnEmpDataBrowse.UseVisualStyleBackColor = True
-        '
-        'txtEmployeeDataFilepath
-        '
-        Me.txtEmployeeDataFilepath.Location = New System.Drawing.Point(123, 68)
-        Me.txtEmployeeDataFilepath.Margin = New System.Windows.Forms.Padding(4)
-        Me.txtEmployeeDataFilepath.Name = "txtEmployeeDataFilepath"
-        Me.txtEmployeeDataFilepath.ReadOnly = True
-        Me.txtEmployeeDataFilepath.Size = New System.Drawing.Size(444, 22)
-        Me.txtEmployeeDataFilepath.TabIndex = 4
-        '
-        'lblEmployeeData
-        '
-        Me.lblEmployeeData.AutoSize = True
-        Me.lblEmployeeData.Location = New System.Drawing.Point(8, 72)
-        Me.lblEmployeeData.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
-        Me.lblEmployeeData.Name = "lblEmployeeData"
-        Me.lblEmployeeData.Size = New System.Drawing.Size(104, 17)
-        Me.lblEmployeeData.TabIndex = 3
-        Me.lblEmployeeData.Text = "Employee Data"
         '
         'btnStop
         '
@@ -207,24 +129,66 @@ Partial Class frmInProcess
         Me.lblError.TabIndex = 17
         Me.lblError.Text = "Error Status"
         '
-        'btnASGDataBrowse
+        'opnASGDataFileDialog
         '
-        Me.btnASGDataBrowse.Location = New System.Drawing.Point(572, 111)
-        Me.btnASGDataBrowse.Margin = New System.Windows.Forms.Padding(4)
-        Me.btnASGDataBrowse.Name = "btnASGDataBrowse"
-        Me.btnASGDataBrowse.Size = New System.Drawing.Size(100, 28)
-        Me.btnASGDataBrowse.TabIndex = 8
-        Me.btnASGDataBrowse.Text = "Browse"
-        Me.btnASGDataBrowse.UseVisualStyleBackColor = True
         '
-        'txtASGDataFilepath
+        'lblMappingFIle
         '
-        Me.txtASGDataFilepath.Location = New System.Drawing.Point(123, 113)
-        Me.txtASGDataFilepath.Margin = New System.Windows.Forms.Padding(4)
-        Me.txtASGDataFilepath.Name = "txtASGDataFilepath"
-        Me.txtASGDataFilepath.ReadOnly = True
-        Me.txtASGDataFilepath.Size = New System.Drawing.Size(444, 22)
-        Me.txtASGDataFilepath.TabIndex = 7
+        Me.lblMappingFIle.AutoSize = True
+        Me.lblMappingFIle.Location = New System.Drawing.Point(8, 26)
+        Me.lblMappingFIle.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.lblMappingFIle.Name = "lblMappingFIle"
+        Me.lblMappingFIle.Size = New System.Drawing.Size(88, 17)
+        Me.lblMappingFIle.TabIndex = 0
+        Me.lblMappingFIle.Text = "Mapping File"
+        '
+        'txtMappingFilepath
+        '
+        Me.txtMappingFilepath.Location = New System.Drawing.Point(123, 22)
+        Me.txtMappingFilepath.Margin = New System.Windows.Forms.Padding(4)
+        Me.txtMappingFilepath.Name = "txtMappingFilepath"
+        Me.txtMappingFilepath.ReadOnly = True
+        Me.txtMappingFilepath.Size = New System.Drawing.Size(444, 22)
+        Me.txtMappingFilepath.TabIndex = 1
+        '
+        'btnMappingFileBrowse
+        '
+        Me.btnMappingFileBrowse.Location = New System.Drawing.Point(572, 20)
+        Me.btnMappingFileBrowse.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnMappingFileBrowse.Name = "btnMappingFileBrowse"
+        Me.btnMappingFileBrowse.Size = New System.Drawing.Size(100, 28)
+        Me.btnMappingFileBrowse.TabIndex = 2
+        Me.btnMappingFileBrowse.Text = "Browse"
+        Me.btnMappingFileBrowse.UseVisualStyleBackColor = True
+        '
+        'lblEmployeeData
+        '
+        Me.lblEmployeeData.AutoSize = True
+        Me.lblEmployeeData.Location = New System.Drawing.Point(8, 72)
+        Me.lblEmployeeData.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.lblEmployeeData.Name = "lblEmployeeData"
+        Me.lblEmployeeData.Size = New System.Drawing.Size(104, 17)
+        Me.lblEmployeeData.TabIndex = 3
+        Me.lblEmployeeData.Text = "Employee Data"
+        '
+        'txtEmployeeDataFilepath
+        '
+        Me.txtEmployeeDataFilepath.Location = New System.Drawing.Point(123, 68)
+        Me.txtEmployeeDataFilepath.Margin = New System.Windows.Forms.Padding(4)
+        Me.txtEmployeeDataFilepath.Name = "txtEmployeeDataFilepath"
+        Me.txtEmployeeDataFilepath.ReadOnly = True
+        Me.txtEmployeeDataFilepath.Size = New System.Drawing.Size(444, 22)
+        Me.txtEmployeeDataFilepath.TabIndex = 4
+        '
+        'btnEmpDataBrowse
+        '
+        Me.btnEmpDataBrowse.Location = New System.Drawing.Point(572, 66)
+        Me.btnEmpDataBrowse.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnEmpDataBrowse.Name = "btnEmpDataBrowse"
+        Me.btnEmpDataBrowse.Size = New System.Drawing.Size(100, 28)
+        Me.btnEmpDataBrowse.TabIndex = 5
+        Me.btnEmpDataBrowse.Text = "Browse"
+        Me.btnEmpDataBrowse.UseVisualStyleBackColor = True
         '
         'lblASGDaata
         '
@@ -236,8 +200,44 @@ Partial Class frmInProcess
         Me.lblASGDaata.TabIndex = 6
         Me.lblASGDaata.Text = "ASG Data"
         '
-        'opnASGDataFileDialog
+        'txtASGDataFilepath
         '
+        Me.txtASGDataFilepath.Location = New System.Drawing.Point(123, 113)
+        Me.txtASGDataFilepath.Margin = New System.Windows.Forms.Padding(4)
+        Me.txtASGDataFilepath.Name = "txtASGDataFilepath"
+        Me.txtASGDataFilepath.ReadOnly = True
+        Me.txtASGDataFilepath.Size = New System.Drawing.Size(444, 22)
+        Me.txtASGDataFilepath.TabIndex = 7
+        '
+        'btnASGDataBrowse
+        '
+        Me.btnASGDataBrowse.Location = New System.Drawing.Point(572, 111)
+        Me.btnASGDataBrowse.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnASGDataBrowse.Name = "btnASGDataBrowse"
+        Me.btnASGDataBrowse.Size = New System.Drawing.Size(100, 28)
+        Me.btnASGDataBrowse.TabIndex = 8
+        Me.btnASGDataBrowse.Text = "Browse"
+        Me.btnASGDataBrowse.UseVisualStyleBackColor = True
+        '
+        'grpFileBrowse
+        '
+        Me.grpFileBrowse.Controls.Add(Me.btnASGDataBrowse)
+        Me.grpFileBrowse.Controls.Add(Me.txtASGDataFilepath)
+        Me.grpFileBrowse.Controls.Add(Me.lblASGDaata)
+        Me.grpFileBrowse.Controls.Add(Me.btnEmpDataBrowse)
+        Me.grpFileBrowse.Controls.Add(Me.txtEmployeeDataFilepath)
+        Me.grpFileBrowse.Controls.Add(Me.lblEmployeeData)
+        Me.grpFileBrowse.Controls.Add(Me.btnMappingFileBrowse)
+        Me.grpFileBrowse.Controls.Add(Me.txtMappingFilepath)
+        Me.grpFileBrowse.Controls.Add(Me.lblMappingFIle)
+        Me.grpFileBrowse.Location = New System.Drawing.Point(19, 16)
+        Me.grpFileBrowse.Margin = New System.Windows.Forms.Padding(4)
+        Me.grpFileBrowse.Name = "grpFileBrowse"
+        Me.grpFileBrowse.Padding = New System.Windows.Forms.Padding(4)
+        Me.grpFileBrowse.Size = New System.Drawing.Size(676, 167)
+        Me.grpFileBrowse.TabIndex = 0
+        Me.grpFileBrowse.TabStop = False
+        Me.grpFileBrowse.Text = "Choose File"
         '
         'frmInProcess
         '
@@ -258,7 +258,7 @@ Partial Class frmInProcess
         Me.MaximizeBox = False
         Me.Name = "frmInProcess"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Score Calculator"
+        Me.Text = "In Process"
         Me.grpFileBrowse.ResumeLayout(False)
         Me.grpFileBrowse.PerformLayout()
         Me.ResumeLayout(False)
@@ -267,22 +267,22 @@ Partial Class frmInProcess
     Friend WithEvents btnStart As Button
     Friend WithEvents Panel2 As Panel
     Friend WithEvents Panel1 As Panel
-    Friend WithEvents lblMappingFIle As Label
-    Friend WithEvents txtMappingFilepath As TextBox
-    Friend WithEvents btnMappingFileBrowse As Button
-    Friend WithEvents grpFileBrowse As GroupBox
     Friend WithEvents btnStop As Button
     Friend WithEvents Panel3 As Panel
     Friend WithEvents Panel4 As Panel
     Friend WithEvents lblProgress As Label
     Friend WithEvents opnMappingFileDialog As OpenFileDialog
-    Friend WithEvents btnEmpDataBrowse As Button
-    Friend WithEvents txtEmployeeDataFilepath As TextBox
-    Friend WithEvents lblEmployeeData As Label
     Friend WithEvents opnEmpDataFileDialog As OpenFileDialog
     Friend WithEvents lblError As Label
-    Friend WithEvents btnASGDataBrowse As Button
-    Friend WithEvents txtASGDataFilepath As TextBox
-    Friend WithEvents lblASGDaata As Label
     Friend WithEvents opnASGDataFileDialog As OpenFileDialog
+    Friend WithEvents lblMappingFIle As Label
+    Friend WithEvents txtMappingFilepath As TextBox
+    Friend WithEvents btnMappingFileBrowse As Button
+    Friend WithEvents lblEmployeeData As Label
+    Friend WithEvents txtEmployeeDataFilepath As TextBox
+    Friend WithEvents btnEmpDataBrowse As Button
+    Friend WithEvents lblASGDaata As Label
+    Friend WithEvents txtASGDataFilepath As TextBox
+    Friend WithEvents btnASGDataBrowse As Button
+    Friend WithEvents grpFileBrowse As GroupBox
 End Class

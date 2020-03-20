@@ -210,9 +210,10 @@ Public Class frmInProcess
 
     Private _canceller As CancellationTokenSource
     Private Sub frmMain_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        txtMappingFilepath.Text = My.Settings.MappingFilePath
-        txtEmployeeDataFilepath.Text = My.Settings.EmployeeDataFilePath
-        txtASGDataFilepath.Text = My.Settings.ASGFilePath
+        'txtMappingFilepath.Text = My.Settings.MappingFilePath
+        'txtEmployeeDataFilepath.Text = My.Settings.EmployeeDataFilePath
+        'txtASGDataFilepath.Text = My.Settings.ASGFilePath
+        SetObjectEnableDisable_ThreadSafe(grpFileBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
     End Sub
 
@@ -263,6 +264,17 @@ Public Class frmInProcess
     End Sub
 
     Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
+        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "In Process")
+        For Each runningFile In Directory.GetFiles(directoryName)
+            If runningFile.ToUpper.Contains("MAPPING") Then
+                txtMappingFilepath.Text = runningFile
+            ElseIf runningFile.ToUpper.Contains("BFSI") Then
+                txtEmployeeDataFilepath.Text = runningFile
+            ElseIf runningFile.ToUpper.Contains("ASG") Then
+                txtASGDataFilepath.Text = runningFile
+            End If
+        Next
+
         My.Settings.MappingFilePath = txtMappingFilepath.Text
         My.Settings.EmployeeDataFilePath = txtEmployeeDataFilepath.Text
         My.Settings.ASGFilePath = txtASGDataFilepath.Text

@@ -211,8 +211,9 @@ Public Class frmPreProcess
 
     Private _canceller As CancellationTokenSource
     Private Sub frmPreProcess_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        txtFolderpath.Text = My.Settings.FolderPath
-        txtMappingFilepath.Text = My.Settings.PreProcessMappingFilepath
+        'txtFolderpath.Text = My.Settings.FolderPath
+        'txtMappingFilepath.Text = My.Settings.PreProcessMappingFilepath
+        SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
     End Sub
 
@@ -227,6 +228,14 @@ Public Class frmPreProcess
     End Sub
 
     Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
+        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
+        txtFolderpath.Text = directoryName
+        For Each runningFile In Directory.GetFiles(directoryName)
+            If runningFile.ToUpper.Contains("MAPPING") Then
+                txtMappingFilepath.Text = runningFile
+            End If
+        Next
+
         My.Settings.FolderPath = txtFolderpath.Text
         My.Settings.PreProcessMappingFilepath = txtMappingFilepath.Text
         My.Settings.Save()

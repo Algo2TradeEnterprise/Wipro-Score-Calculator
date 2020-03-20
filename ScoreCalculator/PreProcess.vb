@@ -276,6 +276,7 @@ Public Class PreProcess
                                                 xl.SetActiveSheet(runningSheet)
                                                 OnHeartbeat(String.Format("Checking schema {0}", currentFileName))
                                                 xl.CheckExcelSchema(empFileSchema.Values.ToArray)
+                                                xl.UnFilterSheet(runningSheet)
                                                 OnHeartbeat(String.Format("Reading {0}", currentFileName))
                                                 currentMonthEmpData = xl.GetExcelInMemory()
                                                 Exit For
@@ -297,6 +298,7 @@ Public Class PreProcess
                                                 If Not allSheets.Contains("Account Validation") Then
                                                     Throw New ApplicationException("'Account Validation' sheet not available in previous month BFSI file")
                                                 End If
+                                                xl.UnFilterSheet(runningSheet)
                                                 OnHeartbeat(String.Format("Reading {0}", previousFileName))
                                                 previousMonthEmpData = xl.GetExcelInMemory()
                                                 Exit For
@@ -359,6 +361,7 @@ Public Class PreProcess
                                             For Each runningSheet In allSheets
                                                 If runningSheet.ToUpper.Contains("BFSI") Then
                                                     xl.SetActiveSheet(runningSheet)
+                                                    xl.UnFilterSheet(runningSheet)
                                                     OnHeartbeat(String.Format("Writting {0}", currentFileName))
                                                     Dim range As String = xl.GetNamedRange(1, currentMonthEmpData.GetLength(0) - 1, 1, currentMonthEmpData.GetLength(1) - 1)
                                                     xl.WriteArrayToExcel(currentMonthEmpData, range)

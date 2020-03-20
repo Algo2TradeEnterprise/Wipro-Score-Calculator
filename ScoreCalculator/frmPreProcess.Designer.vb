@@ -30,15 +30,15 @@ Partial Class frmPreProcess
         Me.txtFolderpath = New System.Windows.Forms.TextBox()
         Me.lblMappingFIle = New System.Windows.Forms.Label()
         Me.grpFolderBrowse = New System.Windows.Forms.GroupBox()
+        Me.btnMappingFileBrowse = New System.Windows.Forms.Button()
+        Me.txtMappingFilepath = New System.Windows.Forms.TextBox()
+        Me.Label1 = New System.Windows.Forms.Label()
         Me.lblProgress = New System.Windows.Forms.Label()
         Me.Panel4 = New System.Windows.Forms.Panel()
         Me.Panel3 = New System.Windows.Forms.Panel()
         Me.btnStop = New System.Windows.Forms.Button()
         Me.folderBrowse = New System.Windows.Forms.FolderBrowserDialog()
         Me.lblError = New System.Windows.Forms.Label()
-        Me.btnMappingFileBrowse = New System.Windows.Forms.Button()
-        Me.txtMappingFilepath = New System.Windows.Forms.TextBox()
-        Me.Label1 = New System.Windows.Forms.Label()
         Me.opnMappingFileDialog = New System.Windows.Forms.OpenFileDialog()
         Me.grpFolderBrowse.SuspendLayout()
         Me.SuspendLayout()
@@ -118,6 +118,35 @@ Partial Class frmPreProcess
         Me.grpFolderBrowse.TabStop = False
         Me.grpFolderBrowse.Text = "Choose Folder"
         '
+        'btnMappingFileBrowse
+        '
+        Me.btnMappingFileBrowse.Location = New System.Drawing.Point(570, 63)
+        Me.btnMappingFileBrowse.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnMappingFileBrowse.Name = "btnMappingFileBrowse"
+        Me.btnMappingFileBrowse.Size = New System.Drawing.Size(100, 28)
+        Me.btnMappingFileBrowse.TabIndex = 5
+        Me.btnMappingFileBrowse.Text = "Browse"
+        Me.btnMappingFileBrowse.UseVisualStyleBackColor = True
+        '
+        'txtMappingFilepath
+        '
+        Me.txtMappingFilepath.Location = New System.Drawing.Point(121, 65)
+        Me.txtMappingFilepath.Margin = New System.Windows.Forms.Padding(4)
+        Me.txtMappingFilepath.Name = "txtMappingFilepath"
+        Me.txtMappingFilepath.ReadOnly = True
+        Me.txtMappingFilepath.Size = New System.Drawing.Size(444, 22)
+        Me.txtMappingFilepath.TabIndex = 4
+        '
+        'Label1
+        '
+        Me.Label1.AutoSize = True
+        Me.Label1.Location = New System.Drawing.Point(6, 69)
+        Me.Label1.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.Label1.Name = "Label1"
+        Me.Label1.Size = New System.Drawing.Size(88, 17)
+        Me.Label1.TabIndex = 3
+        Me.Label1.Text = "Mapping File"
+        '
         'lblProgress
         '
         Me.lblProgress.Location = New System.Drawing.Point(21, 127)
@@ -165,35 +194,6 @@ Partial Class frmPreProcess
         Me.lblError.TabIndex = 16
         Me.lblError.Text = "Error Status"
         '
-        'btnMappingFileBrowse
-        '
-        Me.btnMappingFileBrowse.Location = New System.Drawing.Point(570, 63)
-        Me.btnMappingFileBrowse.Margin = New System.Windows.Forms.Padding(4)
-        Me.btnMappingFileBrowse.Name = "btnMappingFileBrowse"
-        Me.btnMappingFileBrowse.Size = New System.Drawing.Size(100, 28)
-        Me.btnMappingFileBrowse.TabIndex = 5
-        Me.btnMappingFileBrowse.Text = "Browse"
-        Me.btnMappingFileBrowse.UseVisualStyleBackColor = True
-        '
-        'txtMappingFilepath
-        '
-        Me.txtMappingFilepath.Location = New System.Drawing.Point(121, 65)
-        Me.txtMappingFilepath.Margin = New System.Windows.Forms.Padding(4)
-        Me.txtMappingFilepath.Name = "txtMappingFilepath"
-        Me.txtMappingFilepath.ReadOnly = True
-        Me.txtMappingFilepath.Size = New System.Drawing.Size(444, 22)
-        Me.txtMappingFilepath.TabIndex = 4
-        '
-        'Label1
-        '
-        Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(6, 69)
-        Me.Label1.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
-        Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(88, 17)
-        Me.Label1.TabIndex = 3
-        Me.Label1.Text = "Mapping File"
-        '
         'opnMappingFileDialog
         '
         '
@@ -215,7 +215,7 @@ Partial Class frmPreProcess
         Me.MaximizeBox = False
         Me.Name = "frmPreProcess"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Zero Score Editer"
+        Me.Text = "Pre Process"
         Me.grpFolderBrowse.ResumeLayout(False)
         Me.grpFolderBrowse.PerformLayout()
         Me.ResumeLayout(False)

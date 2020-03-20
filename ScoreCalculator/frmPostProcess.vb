@@ -211,7 +211,8 @@ Public Class frmPostProcess
 
     Private _canceller As CancellationTokenSource
     Private Sub frmPostProcess_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        txtEmployeeDataFilepath.Text = My.Settings.PostProcessEmployeeFilepath
+        'txtEmployeeDataFilepath.Text = My.Settings.PostProcessEmployeeFilepath
+        SetObjectEnableDisable_ThreadSafe(grpFileBrowse, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
     End Sub
 
@@ -234,6 +235,13 @@ Public Class frmPostProcess
     End Sub
 
     Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
+        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
+        For Each runningFile In Directory.GetFiles(directoryName)
+            If runningFile.ToUpper.Contains("BFSI") Then
+                txtEmployeeDataFilepath.Text = runningFile
+            End If
+        Next
+
         My.Settings.PostProcessEmployeeFilepath = txtEmployeeDataFilepath.Text
         My.Settings.Save()
         Await StartProcessing.ConfigureAwait(False)
