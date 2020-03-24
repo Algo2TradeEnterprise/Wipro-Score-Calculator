@@ -30,20 +30,21 @@ Partial Class frmPreProcess
         Me.txtFolderpath = New System.Windows.Forms.TextBox()
         Me.lblMappingFIle = New System.Windows.Forms.Label()
         Me.grpFolderBrowse = New System.Windows.Forms.GroupBox()
+        Me.txtITPi = New System.Windows.Forms.TextBox()
+        Me.txtFndtnCmplt = New System.Windows.Forms.TextBox()
+        Me.lblITPi = New System.Windows.Forms.Label()
+        Me.lblFndtnCmplt = New System.Windows.Forms.Label()
+        Me.chkbITPi = New System.Windows.Forms.CheckBox()
+        Me.chkbFndtnCmplt = New System.Windows.Forms.CheckBox()
+        Me.chkbMaxScoreReplacement = New System.Windows.Forms.CheckBox()
+        Me.chkbZeroScoreReplacement = New System.Windows.Forms.CheckBox()
         Me.lblProgress = New System.Windows.Forms.Label()
         Me.Panel4 = New System.Windows.Forms.Panel()
         Me.Panel3 = New System.Windows.Forms.Panel()
         Me.btnStop = New System.Windows.Forms.Button()
         Me.folderBrowse = New System.Windows.Forms.FolderBrowserDialog()
         Me.lstError = New System.Windows.Forms.ListBox()
-        Me.chkbZeroScoreReplacement = New System.Windows.Forms.CheckBox()
-        Me.chkbMaxScoreReplacement = New System.Windows.Forms.CheckBox()
-        Me.chkbITPi = New System.Windows.Forms.CheckBox()
-        Me.chkbFndtnCmplt = New System.Windows.Forms.CheckBox()
-        Me.lblFndtnCmplt = New System.Windows.Forms.Label()
-        Me.lblITPi = New System.Windows.Forms.Label()
-        Me.txtFndtnCmplt = New System.Windows.Forms.TextBox()
-        Me.txtITPi = New System.Windows.Forms.TextBox()
+        Me.lblMainProgress = New System.Windows.Forms.Label()
         Me.grpFolderBrowse.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -126,14 +127,85 @@ Partial Class frmPreProcess
         Me.grpFolderBrowse.TabStop = False
         Me.grpFolderBrowse.Text = "Settings"
         '
+        'txtITPi
+        '
+        Me.txtITPi.Location = New System.Drawing.Point(645, 90)
+        Me.txtITPi.Name = "txtITPi"
+        Me.txtITPi.Size = New System.Drawing.Size(100, 22)
+        Me.txtITPi.TabIndex = 10
+        '
+        'txtFndtnCmplt
+        '
+        Me.txtFndtnCmplt.Location = New System.Drawing.Point(645, 62)
+        Me.txtFndtnCmplt.Name = "txtFndtnCmplt"
+        Me.txtFndtnCmplt.Size = New System.Drawing.Size(100, 22)
+        Me.txtFndtnCmplt.TabIndex = 9
+        '
+        'lblITPi
+        '
+        Me.lblITPi.AutoSize = True
+        Me.lblITPi.Location = New System.Drawing.Point(563, 92)
+        Me.lblITPi.Name = "lblITPi"
+        Me.lblITPi.Size = New System.Drawing.Size(75, 17)
+        Me.lblITPi.TabIndex = 8
+        Me.lblITPi.Text = "Min Score:"
+        '
+        'lblFndtnCmplt
+        '
+        Me.lblFndtnCmplt.AutoSize = True
+        Me.lblFndtnCmplt.Location = New System.Drawing.Point(563, 64)
+        Me.lblFndtnCmplt.Name = "lblFndtnCmplt"
+        Me.lblFndtnCmplt.Size = New System.Drawing.Size(75, 17)
+        Me.lblFndtnCmplt.TabIndex = 7
+        Me.lblFndtnCmplt.Text = "Min Score:"
+        '
+        'chkbITPi
+        '
+        Me.chkbITPi.AutoSize = True
+        Me.chkbITPi.Location = New System.Drawing.Point(237, 91)
+        Me.chkbITPi.Name = "chkbITPi"
+        Me.chkbITPi.Size = New System.Drawing.Size(217, 21)
+        Me.chkbITPi.TabIndex = 6
+        Me.chkbITPi.Text = "Foundation Complete -> I T Pi"
+        Me.chkbITPi.UseVisualStyleBackColor = True
+        '
+        'chkbFndtnCmplt
+        '
+        Me.chkbFndtnCmplt.AutoSize = True
+        Me.chkbFndtnCmplt.Location = New System.Drawing.Point(237, 63)
+        Me.chkbFndtnCmplt.Name = "chkbFndtnCmplt"
+        Me.chkbFndtnCmplt.Size = New System.Drawing.Size(312, 21)
+        Me.chkbFndtnCmplt.TabIndex = 5
+        Me.chkbFndtnCmplt.Text = "Foundation Pending -> Foundation Complete"
+        Me.chkbFndtnCmplt.UseVisualStyleBackColor = True
+        '
+        'chkbMaxScoreReplacement
+        '
+        Me.chkbMaxScoreReplacement.AutoSize = True
+        Me.chkbMaxScoreReplacement.Location = New System.Drawing.Point(11, 91)
+        Me.chkbMaxScoreReplacement.Name = "chkbMaxScoreReplacement"
+        Me.chkbMaxScoreReplacement.Size = New System.Drawing.Size(183, 21)
+        Me.chkbMaxScoreReplacement.TabIndex = 4
+        Me.chkbMaxScoreReplacement.Text = "Max Score Replacement"
+        Me.chkbMaxScoreReplacement.UseVisualStyleBackColor = True
+        '
+        'chkbZeroScoreReplacement
+        '
+        Me.chkbZeroScoreReplacement.AutoSize = True
+        Me.chkbZeroScoreReplacement.Location = New System.Drawing.Point(11, 63)
+        Me.chkbZeroScoreReplacement.Name = "chkbZeroScoreReplacement"
+        Me.chkbZeroScoreReplacement.Size = New System.Drawing.Size(188, 21)
+        Me.chkbZeroScoreReplacement.TabIndex = 3
+        Me.chkbZeroScoreReplacement.Text = "Zero Score Replacement"
+        Me.chkbZeroScoreReplacement.UseVisualStyleBackColor = True
+        '
         'lblProgress
         '
-        Me.lblProgress.Location = New System.Drawing.Point(21, 140)
+        Me.lblProgress.Location = New System.Drawing.Point(21, 168)
         Me.lblProgress.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.lblProgress.Name = "lblProgress"
-        Me.lblProgress.Size = New System.Drawing.Size(963, 71)
+        Me.lblProgress.Size = New System.Drawing.Size(963, 43)
         Me.lblProgress.TabIndex = 15
-        Me.lblProgress.Text = "Progress Status"
         '
         'Panel4
         '
@@ -175,83 +247,21 @@ Partial Class frmPreProcess
         Me.lstError.Size = New System.Drawing.Size(963, 196)
         Me.lstError.TabIndex = 28
         '
-        'chkbZeroScoreReplacement
+        'lblMainProgress
         '
-        Me.chkbZeroScoreReplacement.AutoSize = True
-        Me.chkbZeroScoreReplacement.Location = New System.Drawing.Point(11, 63)
-        Me.chkbZeroScoreReplacement.Name = "chkbZeroScoreReplacement"
-        Me.chkbZeroScoreReplacement.Size = New System.Drawing.Size(188, 21)
-        Me.chkbZeroScoreReplacement.TabIndex = 3
-        Me.chkbZeroScoreReplacement.Text = "Zero Score Replacement"
-        Me.chkbZeroScoreReplacement.UseVisualStyleBackColor = True
-        '
-        'chkbMaxScoreReplacement
-        '
-        Me.chkbMaxScoreReplacement.AutoSize = True
-        Me.chkbMaxScoreReplacement.Location = New System.Drawing.Point(11, 91)
-        Me.chkbMaxScoreReplacement.Name = "chkbMaxScoreReplacement"
-        Me.chkbMaxScoreReplacement.Size = New System.Drawing.Size(183, 21)
-        Me.chkbMaxScoreReplacement.TabIndex = 4
-        Me.chkbMaxScoreReplacement.Text = "Max Score Replacement"
-        Me.chkbMaxScoreReplacement.UseVisualStyleBackColor = True
-        '
-        'chkbITPi
-        '
-        Me.chkbITPi.AutoSize = True
-        Me.chkbITPi.Location = New System.Drawing.Point(237, 91)
-        Me.chkbITPi.Name = "chkbITPi"
-        Me.chkbITPi.Size = New System.Drawing.Size(217, 21)
-        Me.chkbITPi.TabIndex = 6
-        Me.chkbITPi.Text = "Foundation Complete -> I T Pi"
-        Me.chkbITPi.UseVisualStyleBackColor = True
-        '
-        'chkbFndtnCmplt
-        '
-        Me.chkbFndtnCmplt.AutoSize = True
-        Me.chkbFndtnCmplt.Location = New System.Drawing.Point(237, 63)
-        Me.chkbFndtnCmplt.Name = "chkbFndtnCmplt"
-        Me.chkbFndtnCmplt.Size = New System.Drawing.Size(312, 21)
-        Me.chkbFndtnCmplt.TabIndex = 5
-        Me.chkbFndtnCmplt.Text = "Foundation Pending -> Foundation Complete"
-        Me.chkbFndtnCmplt.UseVisualStyleBackColor = True
-        '
-        'lblFndtnCmplt
-        '
-        Me.lblFndtnCmplt.AutoSize = True
-        Me.lblFndtnCmplt.Location = New System.Drawing.Point(563, 64)
-        Me.lblFndtnCmplt.Name = "lblFndtnCmplt"
-        Me.lblFndtnCmplt.Size = New System.Drawing.Size(75, 17)
-        Me.lblFndtnCmplt.TabIndex = 7
-        Me.lblFndtnCmplt.Text = "Min Score:"
-        '
-        'lblITPi
-        '
-        Me.lblITPi.AutoSize = True
-        Me.lblITPi.Location = New System.Drawing.Point(563, 92)
-        Me.lblITPi.Name = "lblITPi"
-        Me.lblITPi.Size = New System.Drawing.Size(75, 17)
-        Me.lblITPi.TabIndex = 8
-        Me.lblITPi.Text = "Min Score:"
-        '
-        'txtFndtnCmplt
-        '
-        Me.txtFndtnCmplt.Location = New System.Drawing.Point(645, 62)
-        Me.txtFndtnCmplt.Name = "txtFndtnCmplt"
-        Me.txtFndtnCmplt.Size = New System.Drawing.Size(100, 22)
-        Me.txtFndtnCmplt.TabIndex = 9
-        '
-        'txtITPi
-        '
-        Me.txtITPi.Location = New System.Drawing.Point(645, 90)
-        Me.txtITPi.Name = "txtITPi"
-        Me.txtITPi.Size = New System.Drawing.Size(100, 22)
-        Me.txtITPi.TabIndex = 10
+        Me.lblMainProgress.Location = New System.Drawing.Point(22, 142)
+        Me.lblMainProgress.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.lblMainProgress.Name = "lblMainProgress"
+        Me.lblMainProgress.Size = New System.Drawing.Size(963, 26)
+        Me.lblMainProgress.TabIndex = 29
+        Me.lblMainProgress.Text = "Progress Status"
         '
         'frmPreProcess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(1007, 431)
+        Me.Controls.Add(Me.lblMainProgress)
         Me.Controls.Add(Me.lstError)
         Me.Controls.Add(Me.Panel4)
         Me.Controls.Add(Me.btnStart)
@@ -293,4 +303,5 @@ Partial Class frmPreProcess
     Friend WithEvents lblFndtnCmplt As Label
     Friend WithEvents chkbITPi As CheckBox
     Friend WithEvents chkbFndtnCmplt As CheckBox
+    Friend WithEvents lblMainProgress As Label
 End Class

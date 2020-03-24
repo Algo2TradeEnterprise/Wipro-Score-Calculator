@@ -198,6 +198,9 @@ Public Class frmPreProcess
 #End Region
 
 #Region "Event Handlers"
+    Private Sub OnHeartbeatMain(message As String)
+        SetLabelText_ThreadSafe(lblMainProgress, message)
+    End Sub
     Private Sub OnHeartbeat(message As String)
         SetLabelText_ThreadSafe(lblProgress, message)
     End Sub
@@ -267,16 +270,14 @@ Public Class frmPreProcess
             SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, True)
             SetObjectEnableDisable_ThreadSafe(btnStart, True)
             SetObjectEnableDisable_ThreadSafe(btnStop, False)
-            OnHeartbeat("Process complete")
+            OnHeartbeatMain("Process complete")
+            OnHeartbeat("")
         End Try
     End Function
 
     Private Sub StartFileDistribution()
-        OnHeartbeat("Distributing files to there required folders")
+        OnHeartbeatMain("Distributing files to there required folders")
         Dim inputFolder As String = txtFolderpath.Text
-
-
-
         For Each runningFile In Directory.GetFiles(inputFolder)
             _canceller.Token.ThrowIfCancellationRequested()
             If runningFile.ToUpper.Contains("MAPPING") Then
@@ -329,6 +330,7 @@ Public Class frmPreProcess
     End Sub
 
     Private Async Function StartScoreModifyProcessingAsync() As Task
+        OnHeartbeatMain("Checking Foundation Complete and I T Pi upgrade from Foundation Pending and Foundation Complete")
         Dim mdfyPndngToCmplt As Boolean = GetCheckBoxChecked_ThreadSafe(chkbFndtnCmplt)
         Dim mdfyPndngToCmpltMinScore As Decimal = GetTextBoxText_ThreadSafe(txtFndtnCmplt)
         Dim mdfyCmpltToITPi As Boolean = GetCheckBoxChecked_ThreadSafe(chkbITPi)
@@ -382,7 +384,9 @@ Public Class frmPreProcess
                 AddHandler prePrcsHlpr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
                 AddHandler prePrcsHlpr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
 
+                OnHeartbeatMain("Copying necessary data and sheets from previous moth BFSI file")
                 Await prePrcsHlpr.ProcessEmployeeData().ConfigureAwait(False)
+                OnHeartbeatMain("Updating zero score and max score data from previous month score")
                 Await prePrcsHlpr.ProcessScoreData().ConfigureAwait(False)
             End Using
         End If

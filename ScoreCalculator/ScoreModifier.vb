@@ -116,24 +116,24 @@ Public Class ScoreModifier
                                 Dim withFoundationStatus As String = data(rowCtr, statusColumnNumber)
                                 If withFoundationStatus IsNot Nothing Then
                                     If withFoundationStatus.ToUpper = "FOUNDATION PENDING" Then
-                                        Dim withoutFoundationStatus As String = data(rowCtr, statusColumnNumber + 1)
-                                        If withoutFoundationStatus.ToUpper = "I" OrElse
-                                            withoutFoundationStatus.ToUpper = "T" OrElse
-                                            withoutFoundationStatus.ToUpper = "PI" Then
-                                            Dim foundationScore As String = data(rowCtr, scoreColumnNumber)
-                                            If foundationScore IsNot Nothing AndAlso IsNumeric(foundationScore) Then
-                                                If Val(foundationScore) >= _ModifyPendingToCompleteMinScore Then
-                                                    Dim empDetails As EmployeeDetails = New EmployeeDetails With {
-                                                                                            .EmpID = empID,
-                                                                                            .Practice = filePractice,
-                                                                                            .Sheet = "FOUNDATION"
-                                                                                        }
+                                        'Dim withoutFoundationStatus As String = data(rowCtr, statusColumnNumber + 1)
+                                        'If withoutFoundationStatus.ToUpper = "I" OrElse
+                                        '    withoutFoundationStatus.ToUpper = "T" OrElse
+                                        '    withoutFoundationStatus.ToUpper = "PI" Then
+                                        Dim foundationScore As String = data(rowCtr, scoreColumnNumber)
+                                        If foundationScore IsNot Nothing AndAlso IsNumeric(foundationScore) Then
+                                            If Val(foundationScore) >= _ModifyPendingToCompleteMinScore Then
+                                                Dim empDetails As EmployeeDetails = New EmployeeDetails With {
+                                                                                        .EmpID = empID,
+                                                                                        .Practice = filePractice,
+                                                                                        .Sheet = "FOUNDATION"
+                                                                                    }
 
-                                                    If empDetailsList Is Nothing Then empDetailsList = New List(Of EmployeeDetails)
-                                                    empDetailsList.Add(empDetails)
-                                                End If
+                                                If empDetailsList Is Nothing Then empDetailsList = New List(Of EmployeeDetails)
+                                                empDetailsList.Add(empDetails)
                                             End If
                                         End If
+                                        'End If
                                     ElseIf withFoundationStatus.ToUpper = "FOUNDATION COMPLETE" Then
                                         Dim empDetails As EmployeeDetails = New EmployeeDetails With {
                                                                                             .EmpID = empID,
@@ -152,10 +152,6 @@ Public Class ScoreModifier
 
                 If practiceList Is Nothing Then practiceList = New List(Of String)
                 practiceList.Add(filePractice.ToUpper)
-            Next
-
-            For Each runningData In empDetailsList
-                Console.WriteLine(String.Format("{0},{1},{2}", runningData.EmpID, runningData.Practice, runningData.Sheet))
             Next
 
             If practiceList IsNot Nothing AndAlso practiceList.Count > 0 AndAlso
