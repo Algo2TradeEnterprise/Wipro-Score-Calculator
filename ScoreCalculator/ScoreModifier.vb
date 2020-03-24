@@ -70,56 +70,96 @@ Public Class ScoreModifier
 
     Public Async Function ProcessDataAsync() As Task
         Await Task.Delay(1).ConfigureAwait(False)
-        Dim practiceList As List(Of String) = Nothing
-        Dim empDetailsList As List(Of EmployeeDetails) = Nothing
 
-        If _employeeListFileName IsNot Nothing AndAlso File.Exists(_employeeListFileName) Then
-            Dim empData As DataTable = Nothing
-            OnHeartbeat("Reading Employee File")
-            Using csv As New CSVHelper(_employeeListFileName, ",", _cts)
-                empData = csv.GetDataTableFromCSV(1)
-            End Using
-            If empData IsNot Nothing AndAlso empData.Rows.Count > 0 Then
-                For row = 1 To empData.Rows.Count - 1
-                    Dim empID As String = empData.Rows(row).Item(0).ToString.Trim
-                    Dim practice As String = empData.Rows(row).Item(1).ToString.Trim.ToUpper
-                    Dim sheetName As String = empData.Rows(row).Item(2).ToString.Trim.ToUpper
-
-                    If practiceList Is Nothing Then practiceList = New List(Of String)
-                    If Not practiceList.Contains(practice) Then practiceList.Add(practice)
-
-                    Dim empDetails As EmployeeDetails = New EmployeeDetails With {
-                        .EmpID = empID,
-                        .Practice = practice,
-                        .Sheet = sheetName
-                    }
-
-                    If empDetailsList Is Nothing Then empDetailsList = New List(Of EmployeeDetails)
-                    empDetailsList.Add(empDetails)
-                Next
-            End If
-        End If
-
-        If practiceList IsNot Nothing AndAlso practiceList.Count > 0 AndAlso
-            empDetailsList IsNot Nothing AndAlso empDetailsList.Count > 0 Then
-            Dim outputFiles As List(Of String) = Nothing
-            Dim rawScoreFiles As List(Of String) = Nothing
-            For Each runningFile In Directory.GetFiles(_directoryName)
-                Dim filename As String = Path.GetFileName(runningFile)
-                Dim extension As String = Path.GetExtension(runningFile)
-                If extension.ToUpper.Contains("XLS") Then
-                    If filename.ToUpper.Contains("OUTPUT") Then
-                        If outputFiles Is Nothing Then outputFiles = New List(Of String)
-                        outputFiles.Add(runningFile)
-                    Else
-                        If rawScoreFiles Is Nothing Then rawScoreFiles = New List(Of String)
-                        rawScoreFiles.Add(runningFile)
-                    End If
+        Dim outputFiles As List(Of String) = Nothing
+        Dim rawScoreFiles As List(Of String) = Nothing
+        For Each runningFile In Directory.GetFiles(_directoryName)
+            Dim filename As String = Path.GetFileName(runningFile)
+            Dim extension As String = Path.GetExtension(runningFile)
+            If extension.ToUpper.Contains("XLS") Then
+                If filename.ToUpper.Contains("OUTPUT") Then
+                    If outputFiles Is Nothing Then outputFiles = New List(Of String)
+                    outputFiles.Add(runningFile)
+                Else
+                    If rawScoreFiles Is Nothing Then rawScoreFiles = New List(Of String)
+                    rawScoreFiles.Add(runningFile)
                 End If
+            End If
+        Next
+        If outputFiles IsNot Nothing AndAlso outputFiles.Count > 0 AndAlso
+           rawScoreFiles IsNot Nothing AndAlso rawScoreFiles.Count > 0 Then
+            Dim practiceList As List(Of String) = Nothing
+            Dim empDetailsList As List(Of EmployeeDetails) = Nothing
+            Dim prctCtr As Integer = 0
+            For Each runningFile In outputFiles
+                Dim filePractice As String = Path.GetFileNameWithoutExtension(runningFile).Trim.Split(" ")(0).Trim
+                prctCtr += 1
+                OnHeartbeat(String.Format("Creating employee list from previous month output to update score for prectice:{0} #{1}/{2}", filePractice, prctCtr, outputFiles.Count))
+                Using runningXL As New ExcelHelper(runningFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                    runningXL.SetActiveSheet("I T Pi")
+
+                    Dim range As String = runningXL.GetNamedRange(10, 0, 1, runningXL.GetLastCol(10))
+                    Dim statusColumnNumberList As List(Of KeyValuePair(Of Integer, Integer)) = runningXL.FindAll("With Foundation", range, True)
+                    Dim scoreColumnNumberList As List(Of KeyValuePair(Of Integer, Integer)) = runningXL.FindAll("Foundation Level Proficiency", range, True)
+
+                    If scoreColumnNumberList IsNot Nothing AndAlso scoreColumnNumberList.Count > 0 AndAlso
+                        statusColumnNumberList IsNot Nothing AndAlso statusColumnNumberList.Count > 0 Then
+                        Dim statusColumnNumber As Integer = statusColumnNumberList.FirstOrDefault.Value
+                        Dim scoreColumnNumber As Integer = scoreColumnNumberList.FirstOrDefault.Value
+
+                        Dim dataRange As String = runningXL.GetNamedRange(11, runningXL.GetLastRow(1) - 1, 1, runningXL.GetLastCol(11) - 1)
+                        Dim data As Object(,) = runningXL.GetExcelInMemory(dataRange)
+
+                        For rowCtr As Integer = 2 To data.GetLength(0)
+                            Dim empID As String = data(rowCtr, 1)
+                            If empID IsNot Nothing Then
+                                Dim withFoundationStatus As String = data(rowCtr, statusColumnNumber)
+                                If withFoundationStatus IsNot Nothing Then
+                                    If withFoundationStatus.ToUpper = "FOUNDATION PENDING" Then
+                                        Dim withoutFoundationStatus As String = data(rowCtr, statusColumnNumber + 1)
+                                        If withoutFoundationStatus.ToUpper = "I" OrElse
+                                            withoutFoundationStatus.ToUpper = "T" OrElse
+                                            withoutFoundationStatus.ToUpper = "PI" Then
+                                            Dim foundationScore As String = data(rowCtr, scoreColumnNumber)
+                                            If foundationScore IsNot Nothing AndAlso IsNumeric(foundationScore) Then
+                                                If Val(foundationScore) >= _ModifyPendingToCompleteMinScore Then
+                                                    Dim empDetails As EmployeeDetails = New EmployeeDetails With {
+                                                                                            .EmpID = empID,
+                                                                                            .Practice = filePractice,
+                                                                                            .Sheet = "FOUNDATION"
+                                                                                        }
+
+                                                    If empDetailsList Is Nothing Then empDetailsList = New List(Of EmployeeDetails)
+                                                    empDetailsList.Add(empDetails)
+                                                End If
+                                            End If
+                                        End If
+                                    ElseIf withFoundationStatus.ToUpper = "FOUNDATION COMPLETE" Then
+                                        Dim empDetails As EmployeeDetails = New EmployeeDetails With {
+                                                                                            .EmpID = empID,
+                                                                                            .Practice = filePractice,
+                                                                                            .Sheet = "I T PI"
+                                                                                        }
+
+                                        If empDetailsList Is Nothing Then empDetailsList = New List(Of EmployeeDetails)
+                                        empDetailsList.Add(empDetails)
+                                    End If
+                                End If
+                            End If
+                        Next
+                    End If
+                End Using
+
+                If practiceList Is Nothing Then practiceList = New List(Of String)
+                practiceList.Add(filePractice.ToUpper)
             Next
 
-            If outputFiles IsNot Nothing AndAlso outputFiles.Count > 0 AndAlso
-                rawScoreFiles IsNot Nothing AndAlso rawScoreFiles.Count > 0 Then
+            For Each runningData In empDetailsList
+                Console.WriteLine(String.Format("{0},{1},{2}", runningData.EmpID, runningData.Practice, runningData.Sheet))
+            Next
+
+            If practiceList IsNot Nothing AndAlso practiceList.Count > 0 AndAlso
+                empDetailsList IsNot Nothing AndAlso empDetailsList.Count > 0 Then
                 Dim practiceCtr As Integer = 0
                 For Each runningPractice In practiceList
                     practiceCtr += 1
@@ -146,10 +186,10 @@ Public Class ScoreModifier
                                         Dim bucket As String = outputXL.GetData(10, columnCtr)
 
                                         Dim wtgDtls As WeightageDetails = New WeightageDetails With {
-                                        .Weightage = CDec(weightage) * 100,
-                                        .Bucket = bucket,
-                                        .ColumnNumber = columnCtr
-                                    }
+                                    .Weightage = CDec(weightage) * 100,
+                                    .Bucket = bucket,
+                                    .ColumnNumber = columnCtr
+                                }
 
                                         If weightageData Is Nothing Then weightageData = New List(Of WeightageDetails)
                                         weightageData.Add(wtgDtls)
@@ -162,7 +202,7 @@ Public Class ScoreModifier
                                         OnHeartbeat(String.Format("Processing for {0} #{1}/{2} #Pass 1", runningPractice, practiceCtr, practiceList.Count))
                                         Dim practiceEmpDetailsList As IEnumerable(Of EmployeeDetails) = empDetailsList.Where(Function(x)
                                                                                                                                  Return x.Practice.ToUpper = runningPractice.ToUpper AndAlso
-                                                                                                                             x.Sheet.ToUpper = "FOUNDATION".ToUpper
+                                                                                                                         x.Sheet.ToUpper = "FOUNDATION".ToUpper
                                                                                                                              End Function)
                                         If practiceEmpDetailsList IsNot Nothing AndAlso practiceEmpDetailsList.Count > 0 Then
                                             Dim empCtr As Integer = 0
@@ -266,19 +306,19 @@ Public Class ScoreModifier
                                                                                 Next
                                                                             Else
                                                                                 OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                      runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
+                                                                                  runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
                                                                             End If
                                                                         Else
                                                                             OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                      runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
+                                                                                  runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
                                                                         End If
                                                                     Else
                                                                         OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
-                                                                                  runningEmp.EmpID, runningPractice, sheetName))
+                                                                              runningEmp.EmpID, runningPractice, sheetName))
                                                                     End If
                                                                 Else
                                                                     OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                  runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Foundation' sheet"))
+                                                                              runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Foundation' sheet"))
                                                                 End If
 
                                                                 wtgCtr += 1
@@ -286,11 +326,11 @@ Public Class ScoreModifier
                                                             Next
                                                         Else
                                                             OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                 runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Raw Score' file"))
+                                                                             runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Raw Score' file"))
                                                         End If
                                                     Else
                                                         OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                   runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Foundation' sheet"))
+                                                                               runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Foundation' sheet"))
                                                     End If
                                                 End If
                                             Next
@@ -324,7 +364,7 @@ Public Class ScoreModifier
                                         OnHeartbeat(String.Format("Processing for {0} #{1}/{2} #Pass 2", runningPractice, practiceCtr, practiceList.Count))
                                         Dim practiceEmpDetailsList As IEnumerable(Of EmployeeDetails) = empDetailsList.Where(Function(x)
                                                                                                                                  Return x.Practice.ToUpper = runningPractice.ToUpper AndAlso
-                                                                                                                             x.Sheet.ToUpper = "I T PI".ToUpper
+                                                                                                                         x.Sheet.ToUpper = "I T PI".ToUpper
                                                                                                                              End Function)
                                         If practiceEmpDetailsList IsNot Nothing AndAlso practiceEmpDetailsList.Count > 0 Then
                                             Dim empCtr As Integer = 0
@@ -420,27 +460,27 @@ Public Class ScoreModifier
                                                                             Next
                                                                         Else
                                                                             OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                  runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
+                                                                              runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
                                                                         End If
                                                                     Else
                                                                         OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                  runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
+                                                                              runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
                                                                     End If
                                                                 Else
                                                                     OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
-                                                                              runningEmp.EmpID, runningPractice, sheetName))
+                                                                          runningEmp.EmpID, runningPractice, sheetName))
                                                                 End If
                                                             Else
                                                                 OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                              runningEmp.EmpID, runningPractice, "Above min Score Not found in 'I T Pi' sheet"))
+                                                                          runningEmp.EmpID, runningPractice, "Above min Score Not found in 'I T Pi' sheet"))
                                                             End If
                                                         Else
                                                             OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                             runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Raw Score' file"))
+                                                                         runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Raw Score' file"))
                                                         End If
                                                     Else
                                                         OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                               runningEmp.EmpID, runningPractice, "EMP ID Not found in 'I T Pi' sheet"))
+                                                                           runningEmp.EmpID, runningPractice, "EMP ID Not found in 'I T Pi' sheet"))
                                                     End If
                                                 End If
                                             Next
