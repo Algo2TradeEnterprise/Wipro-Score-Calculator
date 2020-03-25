@@ -177,7 +177,7 @@ Public Class PreProcess
                                 End Using
                                 If currentMonthScoreData IsNot Nothing AndAlso previousMonthScoreData IsNot Nothing Then
                                     For rowCounter As Integer = 2 To currentMonthScoreData.GetLength(0) - 1
-                                        OnHeartbeat(String.Format("Replacing Zero score {0}/{1}. File:{2}", rowCounter, currentMonthScoreData.GetLength(0) - 1, currentFileName))
+                                        OnHeartbeat(String.Format("Replacing Zero/Max score {0}/{1}. File:{2}", rowCounter, currentMonthScoreData.GetLength(0) - 1, currentFileName))
                                         _cts.Token.ThrowIfCancellationRequested()
                                         Dim empID As String = currentMonthScoreData(rowCounter, 1)
                                         If empID IsNot Nothing Then
@@ -204,6 +204,12 @@ Public Class PreProcess
                                                             End If
                                                         End If
                                                         'End If
+                                                    End If
+                                                    'Add grace mark
+                                                    Dim updatedScore As String = currentMonthScoreData(rowCounter, columnCounter)
+                                                    If updatedScore IsNot Nothing Then
+                                                        updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * 5 / 100), 100)
+                                                        currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
                                                     End If
                                                 Next
                                             End If
