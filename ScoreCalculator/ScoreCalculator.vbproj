@@ -49,7 +49,7 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>algo2tradericon_512x512.ico</ApplicationIcon>
+    <ApplicationIcon>scoreboard.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -79,18 +79,6 @@
   <ItemGroup>
     <Compile Include="ASG.vb" />
     <Compile Include="Common.vb" />
-    <Compile Include="frmMain.Designer.vb">
-      <DependentUpon>frmMain.vb</DependentUpon>
-    </Compile>
-    <Compile Include="frmMain.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmPostProcess.Designer.vb">
-      <DependentUpon>frmPostProcess.vb</DependentUpon>
-    </Compile>
-    <Compile Include="frmPostProcess.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="frmScoreManagement.Designer.vb">
       <DependentUpon>frmScoreManagement.vb</DependentUpon>
     </Compile>
@@ -98,13 +86,6 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="InProcess.vb" />
-    <Compile Include="frmInProcess.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="frmInProcess.Designer.vb">
-      <DependentUpon>frmInProcess.vb</DependentUpon>
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="frmPreProcess.Designer.vb">
       <DependentUpon>frmPreProcess.vb</DependentUpon>
     </Compile>
@@ -133,15 +114,6 @@
     <Compile Include="ScoreModifier.vb" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="frmInProcess.resx">
-      <DependentUpon>frmInProcess.vb</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="frmMain.resx">
-      <DependentUpon>frmMain.vb</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="frmPostProcess.resx">
-      <DependentUpon>frmPostProcess.vb</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="frmPreProcess.resx">
       <DependentUpon>frmPreProcess.vb</DependentUpon>
     </EmbeddedResource>
@@ -168,13 +140,13 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="algo2tradericon_512x512.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Utilities\Utilities.vbproj">
       <Project>{0524d87f-b8bf-4cc2-b955-49950110fe9a}</Project>
       <Name>Utilities</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="scoreboard.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

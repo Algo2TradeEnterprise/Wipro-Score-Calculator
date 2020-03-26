@@ -63,7 +63,7 @@ Partial Class frmPreProcess
         '
         'Panel2
         '
-        Me.Panel2.BackColor = System.Drawing.Color.Black
+        Me.Panel2.BackColor = System.Drawing.Color.SkyBlue
         Me.Panel2.Location = New System.Drawing.Point(14, 1)
         Me.Panel2.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel2.Name = "Panel2"
@@ -72,7 +72,7 @@ Partial Class frmPreProcess
         '
         'Panel1
         '
-        Me.Panel1.BackColor = System.Drawing.Color.Black
+        Me.Panel1.BackColor = System.Drawing.Color.SkyBlue
         Me.Panel1.Location = New System.Drawing.Point(1, 1)
         Me.Panel1.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel1.Name = "Panel1"
@@ -222,7 +222,7 @@ Partial Class frmPreProcess
         '
         'Panel4
         '
-        Me.Panel4.BackColor = System.Drawing.Color.Black
+        Me.Panel4.BackColor = System.Drawing.Color.SkyBlue
         Me.Panel4.Location = New System.Drawing.Point(1, 454)
         Me.Panel4.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel4.Name = "Panel4"
@@ -231,7 +231,7 @@ Partial Class frmPreProcess
         '
         'Panel3
         '
-        Me.Panel3.BackColor = System.Drawing.Color.Black
+        Me.Panel3.BackColor = System.Drawing.Color.SkyBlue
         Me.Panel3.Location = New System.Drawing.Point(992, 1)
         Me.Panel3.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel3.Name = "Panel3"
@@ -300,7 +300,7 @@ Partial Class frmPreProcess
         Me.MaximizeBox = False
         Me.Name = "frmPreProcess"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Pre Process"
+        Me.Text = "Score Calculator"
         Me.grpFolderBrowse.ResumeLayout(False)
         Me.grpFolderBrowse.PerformLayout()
         Me.ResumeLayout(False)
