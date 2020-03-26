@@ -86,10 +86,10 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="InProcess.vb" />
-    <Compile Include="frmPreProcess.Designer.vb">
-      <DependentUpon>frmPreProcess.vb</DependentUpon>
+    <Compile Include="frmAllProcess.Designer.vb">
+      <DependentUpon>frmAllProcess.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmPreProcess.vb">
+    <Compile Include="frmAllProcess.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="JScore.vb" />
@@ -114,8 +114,8 @@
     <Compile Include="ScoreModifier.vb" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="frmPreProcess.resx">
-      <DependentUpon>frmPreProcess.vb</DependentUpon>
+    <EmbeddedResource Include="frmAllProcess.resx">
+      <DependentUpon>frmAllProcess.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmScoreManagement.resx">
       <DependentUpon>frmScoreManagement.vb</DependentUpon>

@@ -1,7 +1,7 @@
 ﻿Imports System.IO
 Imports System.Threading
 
-Public Class frmPreProcess
+Public Class frmAllProcess
 
 #Region "Common Delegates"
     Delegate Sub SetObjectEnableDisable_Delegate(ByVal [obj] As Object, ByVal [value] As Boolean)
