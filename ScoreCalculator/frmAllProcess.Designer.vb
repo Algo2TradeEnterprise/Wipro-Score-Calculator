@@ -52,6 +52,7 @@ Partial Class frmAllProcess
         '
         'btnStartWithScoreAdjustment
         '
+        Me.btnStartWithScoreAdjustment.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.btnStartWithScoreAdjustment.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.btnStartWithScoreAdjustment.Location = New System.Drawing.Point(420, 139)
         Me.btnStartWithScoreAdjustment.Margin = New System.Windows.Forms.Padding(4)
@@ -63,6 +64,8 @@ Partial Class frmAllProcess
         '
         'Panel2
         '
+        Me.Panel2.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.Panel2.BackColor = System.Drawing.Color.SkyBlue
         Me.Panel2.Location = New System.Drawing.Point(14, 1)
         Me.Panel2.Margin = New System.Windows.Forms.Padding(4)
@@ -72,6 +75,8 @@ Partial Class frmAllProcess
         '
         'Panel1
         '
+        Me.Panel1.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.Panel1.BackColor = System.Drawing.Color.SkyBlue
         Me.Panel1.Location = New System.Drawing.Point(1, 1)
         Me.Panel1.Margin = New System.Windows.Forms.Padding(4)
@@ -109,6 +114,8 @@ Partial Class frmAllProcess
         '
         'grpFolderBrowse
         '
+        Me.grpFolderBrowse.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.grpFolderBrowse.Controls.Add(Me.chkbAutoProcess)
         Me.grpFolderBrowse.Controls.Add(Me.txtITPi)
         Me.grpFolderBrowse.Controls.Add(Me.txtFndtnCmplt)
@@ -214,6 +221,8 @@ Partial Class frmAllProcess
         '
         'lblProgress
         '
+        Me.lblProgress.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.lblProgress.Location = New System.Drawing.Point(21, 206)
         Me.lblProgress.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.lblProgress.Name = "lblProgress"
@@ -222,6 +231,8 @@ Partial Class frmAllProcess
         '
         'Panel4
         '
+        Me.Panel4.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.Panel4.BackColor = System.Drawing.Color.SkyBlue
         Me.Panel4.Location = New System.Drawing.Point(1, 454)
         Me.Panel4.Margin = New System.Windows.Forms.Padding(4)
@@ -231,6 +242,8 @@ Partial Class frmAllProcess
         '
         'Panel3
         '
+        Me.Panel3.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.Panel3.BackColor = System.Drawing.Color.SkyBlue
         Me.Panel3.Location = New System.Drawing.Point(992, 1)
         Me.Panel3.Margin = New System.Windows.Forms.Padding(4)
@@ -240,6 +253,7 @@ Partial Class frmAllProcess
         '
         'btnStop
         '
+        Me.btnStop.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.btnStop.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.btnStop.Location = New System.Drawing.Point(879, 139)
         Me.btnStop.Margin = New System.Windows.Forms.Padding(4)
@@ -251,6 +265,9 @@ Partial Class frmAllProcess
         '
         'lstError
         '
+        Me.lstError.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.lstError.ForeColor = System.Drawing.Color.FromArgb(CType(CType(29, Byte), Integer), CType(CType(29, Byte), Integer), CType(CType(29, Byte), Integer))
         Me.lstError.FormattingEnabled = True
         Me.lstError.ItemHeight = 16
@@ -262,6 +279,8 @@ Partial Class frmAllProcess
         '
         'lblMainProgress
         '
+        Me.lblMainProgress.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.lblMainProgress.Location = New System.Drawing.Point(22, 180)
         Me.lblMainProgress.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.lblMainProgress.Name = "lblMainProgress"
@@ -271,6 +290,7 @@ Partial Class frmAllProcess
         '
         'btnStartWithoutScoreAdjustment
         '
+        Me.btnStartWithoutScoreAdjustment.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.btnStartWithoutScoreAdjustment.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.2!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.btnStartWithoutScoreAdjustment.Location = New System.Drawing.Point(635, 139)
         Me.btnStartWithoutScoreAdjustment.Margin = New System.Windows.Forms.Padding(4)
@@ -280,7 +300,7 @@ Partial Class frmAllProcess
         Me.btnStartWithoutScoreAdjustment.Text = "Start Without Adjustment"
         Me.btnStartWithoutScoreAdjustment.UseVisualStyleBackColor = True
         '
-        'frmPreProcess
+        'frmAllProcess
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
@@ -298,7 +318,7 @@ Partial Class frmAllProcess
         Me.Controls.Add(Me.btnStop)
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximizeBox = False
-        Me.Name = "frmPreProcess"
+        Me.Name = "frmAllProcess"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Score Calculator"
         Me.grpFolderBrowse.ResumeLayout(False)
