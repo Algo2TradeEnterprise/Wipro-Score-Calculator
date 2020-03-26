@@ -223,6 +223,7 @@ Public Class frmPreProcess
     Private ReadOnly _inProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "In Process")
     Private ReadOnly _postProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
 
+    Private _addGraceMark As Boolean = False
     Private _canceller As CancellationTokenSource
     Private Sub frmPreProcess_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         txtFolderpath.Text = My.Settings.FolderPath
@@ -234,6 +235,7 @@ Public Class frmPreProcess
         chkbITPi_CheckedChanged(sender, e)
         txtFndtnCmplt.Text = My.Settings.FoundationPendingToCompleteMinScore
         txtITPi.Text = My.Settings.FoundationCompleteToITPiMinScore
+        chkbAutoProcess.Checked = My.Settings.AutoProcessAllStep
 
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
     End Sub
@@ -248,27 +250,58 @@ Public Class frmPreProcess
         _canceller.Cancel()
     End Sub
 
-    Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
+    Private Async Sub btnStartWithScoreAdjustment_Click(sender As Object, e As EventArgs) Handles btnStartWithScoreAdjustment.Click
+        _addGraceMark = True
         My.Settings.FolderPath = txtFolderpath.Text
+        My.Settings.AutoProcessAllStep = chkbAutoProcess.Checked
+        My.Settings.Save()
+        Await Task.Run(AddressOf StartProcessingAsync).ConfigureAwait(False)
+    End Sub
+
+    Private Async Sub btnStartWithoutScoreAdjustment_Click(sender As Object, e As EventArgs) Handles btnStartWithoutScoreAdjustment.Click
+        _addGraceMark = False
+        My.Settings.FolderPath = txtFolderpath.Text
+        My.Settings.AutoProcessAllStep = chkbAutoProcess.Checked
         My.Settings.Save()
         Await Task.Run(AddressOf StartProcessingAsync).ConfigureAwait(False)
     End Sub
 
     Private Async Function StartProcessingAsync() As Task
         SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, False)
-        SetObjectEnableDisable_ThreadSafe(btnStart, False)
+        SetObjectEnableDisable_ThreadSafe(btnStartWithScoreAdjustment, False)
+        SetObjectEnableDisable_ThreadSafe(btnStartWithoutScoreAdjustment, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, True)
         Try
             _canceller = New CancellationTokenSource
 
+            'Pre Process
             StartFileDistribution()
             Await StartScoreModifyProcessingAsync().ConfigureAwait(False)
-            Await StartMaxScoreReplacementProcessingAsync().ConfigureAwait(False)
+            Await StartMaxScoreReplacementProcessingAsync(_addGraceMark).ConfigureAwait(False)
+
+            If GetCheckBoxChecked_ThreadSafe(chkbAutoProcess) Then
+                'In Process
+                Await StartInProcessing().ConfigureAwait(False)
+                'Post Process
+                Await StartPostProcessing().ConfigureAwait(False)
+            Else
+                If MessageBox.Show("Pre process complete. Proceed to next step?", "Score Calculator", MessageBoxButtons.YesNo) = DialogResult.Yes Then
+                    'In Process
+                    Await StartInProcessing().ConfigureAwait(False)
+                    If MessageBox.Show("In process complete. Proceed to next step?", "Score Calculator", MessageBoxButtons.YesNo) = DialogResult.Yes Then
+                        'Post Process
+                        Await StartPostProcessing().ConfigureAwait(False)
+                    End If
+                End If
+            End If
+        Catch cex As OperationCanceledException
+            MessageBox.Show(cex.Message, "Score Calculator", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
         Catch ex As Exception
-            MsgBox(ex.ToString, MsgBoxStyle.Critical)
+            MessageBox.Show(ex.ToString, "Score Calculator", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
             SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, True)
-            SetObjectEnableDisable_ThreadSafe(btnStart, True)
+            SetObjectEnableDisable_ThreadSafe(btnStartWithScoreAdjustment, True)
+            SetObjectEnableDisable_ThreadSafe(btnStartWithoutScoreAdjustment, True)
             SetObjectEnableDisable_ThreadSafe(btnStop, False)
             OnHeartbeatMain("Process complete")
             OnHeartbeat("")
@@ -358,7 +391,7 @@ Public Class frmPreProcess
         End If
     End Function
 
-    Private Async Function StartMaxScoreReplacementProcessingAsync() As Task
+    Private Async Function StartMaxScoreReplacementProcessingAsync(ByVal addGraceMark As Boolean) As Task
         Dim zeroScoreReplace As Boolean = GetCheckBoxChecked_ThreadSafe(chkbZeroScoreReplacement)
         Dim maxScoreReplace As Boolean = GetCheckBoxChecked_ThreadSafe(chkbMaxScoreReplacement)
         My.Settings.ZeroScoreReplace = zeroScoreReplace
@@ -377,7 +410,7 @@ Public Class frmPreProcess
             Next
             If mappingFile Is Nothing Then Throw New ApplicationException("Mapping file not exits")
 
-            Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile, zeroScoreReplace, maxScoreReplace)
+            Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile, zeroScoreReplace, maxScoreReplace, addGraceMark)
                 AddHandler prePrcsHlpr.Heartbeat, AddressOf OnHeartbeat
                 AddHandler prePrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
                 AddHandler prePrcsHlpr.WaitingFor, AddressOf OnWaitingFor
@@ -390,6 +423,57 @@ Public Class frmPreProcess
                 Await prePrcsHlpr.ProcessScoreData().ConfigureAwait(False)
             End Using
         End If
+    End Function
+
+    Private Async Function StartInProcessing() As Task
+        OnHeartbeatMain("Calculating Foundation and I T Pi scores of all pratice")
+        Dim mappingFilename As String = Nothing
+        Dim empFilename As String = Nothing
+        Dim asgFilename As String = Nothing
+        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "In Process")
+        For Each runningFile In Directory.GetFiles(directoryName)
+            If runningFile.ToUpper.Contains("MAPPING") Then
+                mappingFilename = runningFile
+            ElseIf runningFile.ToUpper.Contains("BFSI") Then
+                empFilename = runningFile
+            ElseIf runningFile.ToUpper.Contains("ASG") Then
+                asgFilename = runningFile
+            End If
+        Next
+
+        If mappingFilename Is Nothing Then Throw New ApplicationException("Mapping file not exits")
+        If empFilename Is Nothing Then Throw New ApplicationException("Employee file not exits")
+        Using inPrcsHlpr As New InProcess(_canceller, mappingFilename, empFilename, asgFilename)
+            AddHandler inPrcsHlpr.Heartbeat, AddressOf OnHeartbeat
+            AddHandler inPrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
+            AddHandler inPrcsHlpr.WaitingFor, AddressOf OnWaitingFor
+            AddHandler inPrcsHlpr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
+            AddHandler inPrcsHlpr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
+
+            Await inPrcsHlpr.ProcessData().ConfigureAwait(False)
+        End Using
+    End Function
+
+    Private Async Function StartPostProcessing() As Task
+        OnHeartbeatMain("Merging all data and creating neccesary tables at BFSI file")
+        Dim empFilename As String = Nothing
+        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
+        For Each runningFile In Directory.GetFiles(directoryName)
+            If runningFile.ToUpper.Contains("BFSI") Then
+                empFilename = runningFile
+            End If
+        Next
+        If empFilename Is Nothing Then Throw New ApplicationException("Employee file not exits")
+
+        Using pstPrcsHlpr As New PostProcess(_canceller, empFilename)
+            AddHandler pstPrcsHlpr.Heartbeat, AddressOf OnHeartbeat
+            AddHandler pstPrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
+            AddHandler pstPrcsHlpr.WaitingFor, AddressOf OnWaitingFor
+            AddHandler pstPrcsHlpr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
+            AddHandler pstPrcsHlpr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
+
+            Await pstPrcsHlpr.ProcessData().ConfigureAwait(False)
+        End Using
     End Function
 
     Private Sub chkbFndtnCmplt_CheckedChanged(sender As Object, e As EventArgs) Handles chkbFndtnCmplt.CheckedChanged

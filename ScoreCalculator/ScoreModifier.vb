@@ -301,20 +301,20 @@ Public Class ScoreModifier
                                                                                     End If
                                                                                 Next
                                                                             Else
-                                                                                OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                  runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
+                                                                                'OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                                '  runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
                                                                             End If
                                                                         Else
-                                                                            OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                                  runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
+                                                                            'OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                            '      runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
                                                                         End If
                                                                     Else
-                                                                        OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
-                                                                              runningEmp.EmpID, runningPractice, sheetName))
+                                                                        'OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
+                                                                        '      runningEmp.EmpID, runningPractice, sheetName))
                                                                     End If
                                                                 Else
-                                                                    OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                              runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Foundation' sheet"))
+                                                                    'OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                    '          runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Foundation' sheet"))
                                                                 End If
 
                                                                 wtgCtr += 1
@@ -455,20 +455,20 @@ Public Class ScoreModifier
                                                                                 End If
                                                                             Next
                                                                         Else
-                                                                            OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                              runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
+                                                                            'OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                            '  runningEmp.EmpID, runningPractice, "Highest Score column name Not found in 'Max Score' sheet"))
                                                                         End If
                                                                     Else
-                                                                        OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                              runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
+                                                                        'OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                        '      runningEmp.EmpID, runningPractice, "EMP ID Not found in 'Max Score' sheet"))
                                                                     End If
                                                                 Else
-                                                                    OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
-                                                                          runningEmp.EmpID, runningPractice, sheetName))
+                                                                    'OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:'{2}'Sheet Not found",
+                                                                    '      runningEmp.EmpID, runningPractice, sheetName))
                                                                 End If
                                                             Else
-                                                                OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
-                                                                          runningEmp.EmpID, runningPractice, "Above min Score Not found in 'I T Pi' sheet"))
+                                                                'OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",
+                                                                '          runningEmp.EmpID, runningPractice, "Above min Score Not found in 'I T Pi' sheet"))
                                                             End If
                                                         Else
                                                             OnHeartbeatError(String.Format("Neglected Emp ID:{0}, Practice:{1}, Reason:{2}",

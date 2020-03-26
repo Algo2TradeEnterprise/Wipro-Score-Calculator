@@ -39,14 +39,17 @@ Public Class PreProcess
 
     Private ReadOnly _replaceZeroScore As Boolean
     Private ReadOnly _replaceMaxScore As Boolean
+    Private ReadOnly _addGraceMark As Boolean
+    Private ReadOnly _graceMark As Decimal = 5
 
-    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String, ByVal replaceZeroScore As Boolean, ByVal replaceMaxScore As Boolean)
+    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String, ByVal replaceZeroScore As Boolean, ByVal replaceMaxScore As Boolean, ByVal addGraceMark As Boolean)
         _cts = canceller
         _inputDirectoryName = directoryName
         _outputDirectoryName = Path.Combine(Directory.GetParent(_inputDirectoryName).FullName, "In Process")
         _mappingFile = mappingFile
         _replaceZeroScore = replaceZeroScore
         _replaceMaxScore = replaceMaxScore
+        _addGraceMark = addGraceMark
 
         _cmn = New Common(_cts)
         monthList = New Dictionary(Of String, String) From
@@ -206,10 +209,12 @@ Public Class PreProcess
                                                         'End If
                                                     End If
                                                     'Add grace mark
-                                                    Dim updatedScore As String = currentMonthScoreData(rowCounter, columnCounter)
-                                                    If updatedScore IsNot Nothing Then
-                                                        updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * 5 / 100), 100)
-                                                        currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
+                                                    If _addGraceMark Then
+                                                        Dim updatedScore As String = currentMonthScoreData(rowCounter, columnCounter)
+                                                        If updatedScore IsNot Nothing Then
+                                                            updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * _graceMark / 100), 100)
+                                                            currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
+                                                        End If
                                                     End If
                                                 Next
                                             End If
