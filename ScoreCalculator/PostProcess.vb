@@ -170,7 +170,8 @@ Public Class PostProcess
                                        New Dictionary(Of String, ExcelHelper.XLFunction) From {{"TOTAL_DAYS", ExcelHelper.XLFunction.Sum}},
                                        New Dictionary(Of String, String) From {{"Applicable for WFT", "Yes"}})
                     xl.ReorderPivotTable("Vertical View", "Status With Foundation", orderList)
-                    Dim verticalOrderList As List(Of String) = New List(Of String) From {"BFS AMERICAS", "BFS EMEA", "SECURITIES", "INSURANCE", "FS-CITI", "SUB", "BANKING PRODUCTS", "BFS- APAC", "BFSI-GRP", "EMERGING MARKETS", "BP ACCOUNT"}
+                    'Dim verticalOrderList As List(Of String) = New List(Of String) From {"BFS AMERICAS", "BFS EMEA", "SECURITIES", "INSURANCE", "FS-CITI", "SUB", "BANKING PRODUCTS", "BFS- APAC", "BFSI-GRP", "EMERGING MARKETS", "BP ACCOUNT"}
+                    Dim verticalOrderList As List(Of String) = New List(Of String) From {"BFS AMERICAS", "BFS EMEA", "SECURITIES", "INSURANCE", "FS-CITI", "BANKING PRODUCTS", "BFS- APAC", "BFSI-GRP", "EMERGING MARKETS", "BP ACCOUNT"}
                     xl.ReorderPivotTable("Vertical View", "Vertical", verticalOrderList)
 
                     OnHeartbeat("Creating pivot table 'Account View'")
