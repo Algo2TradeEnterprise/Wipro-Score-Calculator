@@ -344,6 +344,8 @@ Public Class frmAllProcess
             End If
         Next
 
+        Dim mdfyPndngToCmplt As Boolean = GetCheckBoxChecked_ThreadSafe(chkbFndtnCmplt)
+        Dim mdfyCmpltToITPi As Boolean = GetCheckBoxChecked_ThreadSafe(chkbITPi)
         If previousMonth IsNot Nothing Then
             For Each runningFile In Directory.GetFiles(inputFolder)
                 _canceller.Token.ThrowIfCancellationRequested()
@@ -353,9 +355,15 @@ Public Class frmAllProcess
                         If File.Exists(preProcessFile) Then File.Delete(preProcessFile)
                         File.Copy(runningFile, preProcessFile)
                     Else
-                        Dim preProcessScrMdfrFile As String = Path.Combine(_preProcessScoreModifierFolder, Path.GetFileName(runningFile))
-                        If File.Exists(preProcessScrMdfrFile) Then File.Delete(preProcessScrMdfrFile)
-                        File.Copy(runningFile, preProcessScrMdfrFile)
+                        If mdfyPndngToCmplt OrElse mdfyCmpltToITPi Then
+                            Dim preProcessScrMdfrFile As String = Path.Combine(_preProcessScoreModifierFolder, Path.GetFileName(runningFile))
+                            If File.Exists(preProcessScrMdfrFile) Then File.Delete(preProcessScrMdfrFile)
+                            File.Copy(runningFile, preProcessScrMdfrFile)
+                        Else
+                            Dim preProcessFile As String = Path.Combine(_preProcessFolder, Path.GetFileName(runningFile))
+                            If File.Exists(preProcessFile) Then File.Delete(preProcessFile)
+                            File.Copy(runningFile, preProcessFile)
+                        End If
                     End If
                 End If
             Next
