@@ -258,8 +258,8 @@ Public Class PostProcess
                         Dim verticalViewRange As String = "$B$7:$G$16"
                         Dim verticalViewData As Object(,) = xl.GetExcelInMemory(verticalViewRange)
                         xl.SetActiveSheet("Progress")
-                        Dim previousMonthRange As String = "$C$5:$H$19"
-                        Dim currentMonthRange As String = "$J$5:$O$19"
+                        Dim previousMonthRange As String = "$C$5:$I$19"
+                        Dim currentMonthRange As String = "$J$5:$P$19"
                         Dim currentMonthDataDumpRange As String = "$J$5:$O$14"
 
                         xl.SetData(3, 3, xl.GetData(3, 9), ExcelHelper.XLAlign.Center)
@@ -272,8 +272,8 @@ Public Class PostProcess
                         Dim currentMonthData As Object(,) = xl.GetExcelInMemory(currentMonthDataDumpRange)
 
                         Dim previousQuarter As String = xl.GetData(23, 9).ToString.Substring(0, 2).Trim
-                        Dim previousQuarterRange As String = "$C$24:$H$38"
-                        Dim currentQuarterRange As String = "$J$24:$O$38"
+                        Dim previousQuarterRange As String = "$C$24:$I$38"
+                        Dim currentQuarterRange As String = "$J$24:$P$38"
                         Dim currentQuarterDataDumpRange As String = "$J$24:$O$33"
                         If previousQuarter.ToUpper <> currentQuarter.ToUpper Then
                             xl.SetData(23, 3, xl.GetData(23, 9), ExcelHelper.XLAlign.Center)
@@ -284,8 +284,8 @@ Public Class PostProcess
                         xl.WriteArrayToExcel(currentMonthData, currentQuarterDataDumpRange)
 
                         Dim previousYear As String = xl.GetData(43, 9).ToString.Substring(7, 2).Trim
-                        Dim previousYearRange As String = "$C$43:$H$57"
-                        Dim currentYearRange As String = "$J$43:$O$57"
+                        Dim previousYearRange As String = "$C$43:$I$57"
+                        Dim currentYearRange As String = "$J$43:$P$57"
                         Dim currentYearDataDumpRange As String = "$J$43:$O$52"
                         If previousYear.ToUpper <> fy.ToUpper Then
                             xl.SetData(43, 3, xl.GetData(43, 9), ExcelHelper.XLAlign.Center)
