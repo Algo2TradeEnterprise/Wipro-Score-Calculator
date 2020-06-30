@@ -40,7 +40,7 @@ Public Class PreProcess
     Private ReadOnly _replaceZeroScore As Boolean
     Private ReadOnly _replaceMaxScore As Boolean
     Private ReadOnly _addGraceMark As Boolean
-    Private ReadOnly _graceMark As Decimal = 3
+    Private ReadOnly _graceMark As Decimal = 5
 
     Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String, ByVal replaceZeroScore As Boolean, ByVal replaceMaxScore As Boolean, ByVal addGraceMark As Boolean)
         _cts = canceller

@@ -270,6 +270,7 @@ Partial Class frmAllProcess
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.lstError.ForeColor = System.Drawing.Color.FromArgb(CType(CType(29, Byte), Integer), CType(CType(29, Byte), Integer), CType(CType(29, Byte), Integer))
         Me.lstError.FormattingEnabled = True
+        Me.lstError.HorizontalScrollbar = True
         Me.lstError.ItemHeight = 16
         Me.lstError.Location = New System.Drawing.Point(21, 254)
         Me.lstError.Margin = New System.Windows.Forms.Padding(4)
