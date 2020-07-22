@@ -188,23 +188,22 @@ Public Class PreProcess
                                             If previousScoreRow <> Integer.MinValue Then
                                                 For columnCounter As Integer = 3 To currentMonthScoreData.GetLength(1) - 1
                                                     _cts.Token.ThrowIfCancellationRequested()
-                                                    Dim score As String = currentMonthScoreData(rowCounter, columnCounter)
-                                                    If score IsNot Nothing AndAlso score = 0 AndAlso _replaceZeroScore Then
-                                                        Dim columnName As String = currentMonthScoreData(1, columnCounter)
-                                                        Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
+                                                    Dim columnName As String = currentMonthScoreData(1, columnCounter)
+                                                    Dim currentScore As String = currentMonthScoreData(rowCounter, columnCounter)
+                                                    Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
+                                                    Dim previousScore As String = Nothing
+                                                    If previousScoreColumn <> Integer.MinValue Then
+                                                        previousScore = previousMonthScoreData(previousScoreRow, previousScoreColumn)
+                                                    End If
+                                                    If currentScore IsNot Nothing AndAlso currentScore = 0 AndAlso _replaceZeroScore Then
                                                         If previousScoreColumn <> Integer.MinValue Then
                                                             currentMonthScoreData(rowCounter, columnCounter) = previousMonthScoreData(previousScoreRow, previousScoreColumn)
                                                         End If
-                                                    ElseIf score IsNot Nothing AndAlso _replaceMaxScore Then
-                                                        Dim columnName As String = currentMonthScoreData(1, columnCounter)
+                                                    ElseIf currentScore IsNot Nothing AndAlso _replaceMaxScore Then
                                                         'If foundationSkillList IsNot Nothing AndAlso foundationSkillList.Count > 0 AndAlso
                                                         '    foundationSkillList.Contains(columnName, StringComparer.OrdinalIgnoreCase) Then
-                                                        Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
-                                                        If previousScoreColumn <> Integer.MinValue Then
-                                                            Dim previousScore As String = previousMonthScoreData(previousScoreRow, previousScoreColumn)
-                                                            If previousScore IsNot Nothing AndAlso Val(previousScore) > Val(score) Then
-                                                                currentMonthScoreData(rowCounter, columnCounter) = Val(previousScore)
-                                                            End If
+                                                        If previousScore IsNot Nothing AndAlso Val(previousScore) > Val(currentScore) Then
+                                                            currentMonthScoreData(rowCounter, columnCounter) = Val(previousScore)
                                                         End If
                                                         'End If
                                                     End If
@@ -212,8 +211,10 @@ Public Class PreProcess
                                                     If _addGraceMark Then
                                                         Dim updatedScore As String = currentMonthScoreData(rowCounter, columnCounter)
                                                         If updatedScore IsNot Nothing Then
-                                                            updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * _graceMark / 100), 100)
-                                                            currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
+                                                            If previousScore Is Nothing OrElse Val(updatedScore) > Val(previousScore) Then
+                                                                updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * _graceMark / 100), 100)
+                                                                currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
+                                                            End If
                                                         End If
                                                     End If
                                                 Next
