@@ -458,8 +458,8 @@ Public Class frmAllProcess
                 AddHandler prePrcsHlpr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
                 AddHandler prePrcsHlpr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
 
-                'OnHeartbeatMain("Copying necessary data and sheets from previous moth BFSI file")
-                'Await prePrcsHlpr.ProcessEmployeeData().ConfigureAwait(False)
+                OnHeartbeatMain("Copying necessary data and sheets from previous moth BFSI file")
+                Await prePrcsHlpr.ProcessEmployeeData().ConfigureAwait(False)
                 OnHeartbeatMain("Updating zero score and max score data from previous month score")
                 Await prePrcsHlpr.ProcessScoreData().ConfigureAwait(False)
             End Using
