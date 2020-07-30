@@ -33,6 +33,7 @@ Public Class PreProcess
     Private ReadOnly _inputDirectoryName As String
     Private ReadOnly _outputDirectoryName As String
     Private ReadOnly _mappingFile As String
+    Private ReadOnly _availableScoreUpdates As Dictionary(Of String, Dictionary(Of String, List(Of ScoreData))) = Nothing
     Private ReadOnly monthList As Dictionary(Of String, String)
     Private ReadOnly scoreFileSchema As Dictionary(Of String, String)
     Private ReadOnly empFileSchema As Dictionary(Of String, String)
@@ -40,9 +41,9 @@ Public Class PreProcess
     Private ReadOnly _replaceZeroScore As Boolean
     Private ReadOnly _replaceMaxScore As Boolean
     Private ReadOnly _addGraceMark As Boolean
-    Private ReadOnly _graceMark As Decimal = 5
+    Private ReadOnly _graceMark As Decimal = 10
 
-    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String, ByVal replaceZeroScore As Boolean, ByVal replaceMaxScore As Boolean, ByVal addGraceMark As Boolean)
+    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String, ByVal replaceZeroScore As Boolean, ByVal replaceMaxScore As Boolean, ByVal addGraceMark As Boolean, ByVal availableScoreUpdates As Dictionary(Of String, Dictionary(Of String, List(Of ScoreData))))
         _cts = canceller
         _inputDirectoryName = directoryName
         _outputDirectoryName = Path.Combine(Directory.GetParent(_inputDirectoryName).FullName, "In Process")
@@ -50,6 +51,7 @@ Public Class PreProcess
         _replaceZeroScore = replaceZeroScore
         _replaceMaxScore = replaceMaxScore
         _addGraceMark = addGraceMark
+        _availableScoreUpdates = availableScoreUpdates
 
         _cmn = New Common(_cts)
         monthList = New Dictionary(Of String, String) From
@@ -210,10 +212,29 @@ Public Class PreProcess
                                                     'Add grace mark
                                                     If _addGraceMark Then
                                                         Dim updatedScore As String = currentMonthScoreData(rowCounter, columnCounter)
-                                                        If updatedScore IsNot Nothing Then
-                                                            If previousScore Is Nothing OrElse Val(updatedScore) > Val(previousScore) Then
-                                                                updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * _graceMark / 100), 100)
-                                                                currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
+                                                        If updatedScore IsNot Nothing AndAlso updatedScore.Trim <> "" AndAlso IsNumeric(updatedScore) Then
+                                                            'If previousScore Is Nothing OrElse Val(updatedScore) > Val(previousScore) Then
+                                                            '    updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * _graceMark / 100), 100)
+                                                            '    currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
+                                                            'End If
+                                                            If _availableScoreUpdates IsNot Nothing AndAlso _availableScoreUpdates.Count > 0 Then
+                                                                Dim practice As String = Path.GetFileName(currentFileName).Split("_")(0)
+                                                                If _availableScoreUpdates.ContainsKey(practice.ToUpper) Then
+                                                                    If _availableScoreUpdates(practice.ToUpper).ContainsKey(empID.ToUpper) Then
+                                                                        Dim scoreDetails As ScoreData = _availableScoreUpdates(practice.ToUpper)(empID.ToUpper).Find(Function(x)
+                                                                                                                                                                         Return x.SkillName.ToUpper = columnName.ToUpper
+                                                                                                                                                                     End Function)
+                                                                        If scoreDetails IsNot Nothing AndAlso scoreDetails.CurrentMonthScore > scoreDetails.PreviousMonthScore Then
+                                                                            If updatedScore > 65 Then
+                                                                                updatedScore = Val(updatedScore) + (scoreDetails.CurrentMonthScore - scoreDetails.PreviousMonthScore)
+                                                                                If updatedScore > 100 Then updatedScore = 100
+                                                                            Else
+                                                                                updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * _graceMark / 100), 100)
+                                                                            End If
+                                                                            currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
+                                                                        End If
+                                                                    End If
+                                                                End If
                                                             End If
                                                         End If
                                                     End If

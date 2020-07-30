@@ -110,8 +110,10 @@
     </Compile>
     <Compile Include="PostProcess.vb" />
     <Compile Include="PreProcess.vb" />
+    <Compile Include="ScoreData.vb" />
     <Compile Include="ScoreManager.vb" />
     <Compile Include="ScoreModifier.vb" />
+    <Compile Include="ScoreUpdateChecker.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="frmAllProcess.resx">
