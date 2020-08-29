@@ -33,24 +33,17 @@ Public Class PreProcess
     Private ReadOnly _inputDirectoryName As String
     Private ReadOnly _outputDirectoryName As String
     Private ReadOnly _mappingFile As String
-    Private ReadOnly _availableScoreUpdates As Dictionary(Of String, Dictionary(Of String, List(Of ScoreData))) = Nothing
+    Private ReadOnly _availableScoreUpdates As Dictionary(Of String, PracticeDetails) = Nothing
     Private ReadOnly monthList As Dictionary(Of String, String)
     Private ReadOnly scoreFileSchema As Dictionary(Of String, String)
     Private ReadOnly empFileSchema As Dictionary(Of String, String)
 
-    Private ReadOnly _replaceZeroScore As Boolean
-    Private ReadOnly _replaceMaxScore As Boolean
-    Private ReadOnly _addGraceMark As Boolean
-    Private ReadOnly _graceMark As Decimal = 10
-
-    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String, ByVal replaceZeroScore As Boolean, ByVal replaceMaxScore As Boolean, ByVal addGraceMark As Boolean, ByVal availableScoreUpdates As Dictionary(Of String, Dictionary(Of String, List(Of ScoreData))))
+    Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String,
+                   ByVal availableScoreUpdates As Dictionary(Of String, PracticeDetails))
         _cts = canceller
         _inputDirectoryName = directoryName
         _outputDirectoryName = Path.Combine(Directory.GetParent(_inputDirectoryName).FullName, "In Process")
         _mappingFile = mappingFile
-        _replaceZeroScore = replaceZeroScore
-        _replaceMaxScore = replaceMaxScore
-        _addGraceMark = addGraceMark
         _availableScoreUpdates = availableScoreUpdates
 
         _cmn = New Common(_cts)
@@ -99,172 +92,229 @@ Public Class PreProcess
         If Not Directory.Exists(_outputDirectoryName) Then
             Throw New ApplicationException(String.Format("Directory not found. {0}", _outputDirectoryName))
         End If
-        OnHeartbeat("Opening mapping file")
-        Using mappingXL As New ExcelHelper(_mappingFile, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-            AddHandler mappingXL.Heartbeat, AddressOf OnHeartbeat
-            AddHandler mappingXL.WaitingFor, AddressOf OnWaitingFor
-            Dim mappingSheetList As List(Of String) = mappingXL.GetExcelSheetsName()
-            Dim skillList As List(Of String) = Nothing
-            For Each runningFile In Directory.GetFiles(_inputDirectoryName)
-                If runningFile.ToUpper.Contains("BFSI") Then
-                    Continue For
-                End If
-                If skillList Is Nothing OrElse Not skillList.Contains(runningFile, StringComparer.OrdinalIgnoreCase) Then
-                    Dim pairFound As Boolean = False
-                    For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
-                        If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
-                            runningPairFile.Remove(runningPairFile.Count - 13).ToUpper = runningFile.Remove(runningFile.Count - 13).ToUpper Then
-                            pairFound = True
-                            If skillList Is Nothing Then skillList = New List(Of String)
-                            skillList.Add(runningFile)
-                            skillList.Add(runningPairFile)
-                            Dim pairFileMonth As String = runningPairFile.Substring(runningPairFile.Count - 13, 3)
-                            Dim mainFileMonth As String = runningFile.Substring(runningFile.Count - 13, 3)
-                            Dim pairFilePreviousMonth As String = Nothing
-                            Dim mainFilePreviousMonth As String = Nothing
-                            If monthList.ContainsKey(pairFileMonth.ToUpper) Then pairFilePreviousMonth = monthList(pairFileMonth.ToUpper)
-                            If monthList.ContainsKey(mainFileMonth.ToUpper) Then mainFilePreviousMonth = monthList(mainFileMonth.ToUpper)
+        Dim practiceWiseMaxScoreData As Dictionary(Of String, Object(,)) = Nothing
+        Dim practiceWiseFilename As Dictionary(Of String, String) = Nothing
+        Dim skillList As List(Of String) = Nothing
+        For Each runningFile In Directory.GetFiles(_inputDirectoryName)
+            If runningFile.ToUpper.Contains("BFSI") Then
+                Continue For
+            End If
+            If skillList Is Nothing OrElse Not skillList.Contains(runningFile, StringComparer.OrdinalIgnoreCase) Then
+                Dim pairFound As Boolean = False
+                For Each runningPairFile In Directory.GetFiles(_inputDirectoryName)
+                    If runningPairFile.ToUpper <> runningFile.ToUpper AndAlso
+                        runningPairFile.Remove(runningPairFile.Count - 13).ToUpper = runningFile.Remove(runningFile.Count - 13).ToUpper Then
+                        pairFound = True
+                        If skillList Is Nothing Then skillList = New List(Of String)
+                        skillList.Add(runningFile)
+                        skillList.Add(runningPairFile)
+                        Dim pairFileMonth As String = runningPairFile.Substring(runningPairFile.Count - 13, 3)
+                        Dim mainFileMonth As String = runningFile.Substring(runningFile.Count - 13, 3)
+                        Dim pairFilePreviousMonth As String = Nothing
+                        Dim mainFilePreviousMonth As String = Nothing
+                        If monthList.ContainsKey(pairFileMonth.ToUpper) Then pairFilePreviousMonth = monthList(pairFileMonth.ToUpper)
+                        If monthList.ContainsKey(mainFileMonth.ToUpper) Then mainFilePreviousMonth = monthList(mainFileMonth.ToUpper)
 
-                            Dim currentFileName As String = Nothing
-                            Dim previousFileName As String = Nothing
-                            If pairFilePreviousMonth IsNot Nothing AndAlso pairFilePreviousMonth.ToUpper = mainFileMonth.ToUpper Then
-                                currentFileName = runningPairFile
-                                previousFileName = runningFile
-                            ElseIf mainFilePreviousMonth IsNot Nothing AndAlso mainFilePreviousMonth.ToUpper = pairFileMonth.ToUpper Then
-                                currentFileName = runningFile
-                                previousFileName = runningPairFile
-                            End If
+                        Dim currentFileName As String = Nothing
+                        Dim previousFileName As String = Nothing
+                        If pairFilePreviousMonth IsNot Nothing AndAlso pairFilePreviousMonth.ToUpper = mainFileMonth.ToUpper Then
+                            currentFileName = runningPairFile
+                            previousFileName = runningFile
+                        ElseIf mainFilePreviousMonth IsNot Nothing AndAlso mainFilePreviousMonth.ToUpper = pairFileMonth.ToUpper Then
+                            currentFileName = runningFile
+                            previousFileName = runningPairFile
+                        End If
 
-                            If currentFileName IsNot Nothing AndAlso previousFileName IsNot Nothing Then
-                                Dim skillName As String = Path.GetFileName(currentFileName).Remove(Path.GetFileName(currentFileName).Count - 29)
-                                Dim foundationSkillList As List(Of String) = Nothing
-                                If mappingSheetList IsNot Nothing AndAlso mappingSheetList.Count > 0 Then
-                                    Dim skillMappingSheetName As String = Nothing
-                                    For Each sheet In mappingSheetList
-                                        If sheet.ToUpper.Contains(skillName.ToUpper) Then
-                                            skillMappingSheetName = sheet
-                                            Exit For
-                                        End If
-                                    Next
-                                    If skillMappingSheetName IsNot Nothing Then
-                                        mappingXL.SetActiveSheet(skillMappingSheetName)
-                                        Dim mappingData As Object(,) = mappingXL.GetExcelInMemory()
-                                        foundationSkillList = GetFoundationList(mappingData)
-                                    End If
-                                End If
-                                Dim currentMonthScoreData As Object(,) = Nothing
-                                Dim previousMonthScoreData As Object(,) = Nothing
-                                OnHeartbeat(String.Format("Opening {0}", currentFileName))
-                                Using xl As New ExcelHelper(currentFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                                    AddHandler xl.Heartbeat, AddressOf OnHeartbeat
-                                    AddHandler xl.WaitingFor, AddressOf OnWaitingFor
-                                    Try
-                                        OnHeartbeat(String.Format("Checking schema {0}", currentFileName))
-                                        xl.CheckExcelSchema(scoreFileSchema.Values.ToArray)
-                                        OnHeartbeat(String.Format("Reading {0}", currentFileName))
-                                        currentMonthScoreData = xl.GetExcelInMemory()
-                                    Catch ex As Exception
-                                        OnHeartbeatError(ex.Message)
-                                    End Try
-                                End Using
-                                OnHeartbeat(String.Format("Opening {0}", previousFileName))
-                                Using xl As New ExcelHelper(previousFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                                    AddHandler xl.Heartbeat, AddressOf OnHeartbeat
-                                    AddHandler xl.WaitingFor, AddressOf OnWaitingFor
-                                    Try
-                                        OnHeartbeat(String.Format("Checking schema {0}", previousFileName))
-                                        xl.CheckExcelSchema(scoreFileSchema.Values.ToArray)
-                                        OnHeartbeat(String.Format("Reading {0}", previousFileName))
-                                        previousMonthScoreData = xl.GetExcelInMemory()
-                                    Catch ex As Exception
-                                        OnHeartbeatError(ex.Message)
-                                    End Try
-                                End Using
-                                If currentMonthScoreData IsNot Nothing AndAlso previousMonthScoreData IsNot Nothing Then
-                                    For rowCounter As Integer = 2 To currentMonthScoreData.GetLength(0) - 1
-                                        OnHeartbeat(String.Format("Replacing Zero/Max score {0}/{1}. File:{2}", rowCounter, currentMonthScoreData.GetLength(0) - 1, currentFileName))
-                                        _cts.Token.ThrowIfCancellationRequested()
-                                        Dim empID As String = currentMonthScoreData(rowCounter, 1)
-                                        If empID IsNot Nothing Then
-                                            Dim previousScoreRow As Integer = _cmn.GetRowOf2DArray(previousMonthScoreData, 1, empID, True)
-                                            If previousScoreRow <> Integer.MinValue Then
-                                                For columnCounter As Integer = 3 To currentMonthScoreData.GetLength(1) - 1
-                                                    _cts.Token.ThrowIfCancellationRequested()
-                                                    Dim columnName As String = currentMonthScoreData(1, columnCounter)
-                                                    Dim currentScore As String = currentMonthScoreData(rowCounter, columnCounter)
-                                                    Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
-                                                    Dim previousScore As String = Nothing
-                                                    If previousScoreColumn <> Integer.MinValue Then
-                                                        previousScore = previousMonthScoreData(previousScoreRow, previousScoreColumn)
-                                                    End If
-                                                    If currentScore IsNot Nothing AndAlso currentScore = 0 AndAlso _replaceZeroScore Then
-                                                        If previousScoreColumn <> Integer.MinValue Then
-                                                            currentMonthScoreData(rowCounter, columnCounter) = previousMonthScoreData(previousScoreRow, previousScoreColumn)
-                                                        End If
-                                                    ElseIf currentScore IsNot Nothing AndAlso _replaceMaxScore Then
-                                                        'If foundationSkillList IsNot Nothing AndAlso foundationSkillList.Count > 0 AndAlso
-                                                        '    foundationSkillList.Contains(columnName, StringComparer.OrdinalIgnoreCase) Then
-                                                        If previousScore IsNot Nothing AndAlso Val(previousScore) > Val(currentScore) Then
-                                                            currentMonthScoreData(rowCounter, columnCounter) = Val(previousScore)
-                                                        End If
-                                                        'End If
-                                                    End If
-                                                    'Add grace mark
-                                                    If _addGraceMark Then
-                                                        Dim updatedScore As String = currentMonthScoreData(rowCounter, columnCounter)
-                                                        If updatedScore IsNot Nothing AndAlso updatedScore.Trim <> "" AndAlso IsNumeric(updatedScore) Then
-                                                            'If previousScore Is Nothing OrElse Val(updatedScore) > Val(previousScore) Then
-                                                            '    updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * _graceMark / 100), 100)
-                                                            '    currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
-                                                            'End If
-                                                            If _availableScoreUpdates IsNot Nothing AndAlso _availableScoreUpdates.Count > 0 Then
-                                                                Dim practice As String = Path.GetFileName(currentFileName).Split("_")(0)
-                                                                If _availableScoreUpdates.ContainsKey(practice.ToUpper) Then
-                                                                    If _availableScoreUpdates(practice.ToUpper).ContainsKey(empID.ToUpper) Then
-                                                                        Dim scoreDetails As ScoreData = _availableScoreUpdates(practice.ToUpper)(empID.ToUpper).Find(Function(x)
-                                                                                                                                                                         Return x.SkillName.ToUpper = columnName.ToUpper
-                                                                                                                                                                     End Function)
-                                                                        If scoreDetails IsNot Nothing AndAlso scoreDetails.CurrentMonthScore > scoreDetails.PreviousMonthScore Then
-                                                                            If updatedScore > 65 Then
-                                                                                updatedScore = Val(updatedScore) + (scoreDetails.CurrentMonthScore - scoreDetails.PreviousMonthScore)
-                                                                                If updatedScore > 100 Then updatedScore = 100
-                                                                            Else
-                                                                                updatedScore = Math.Min(Math.Max(Val(updatedScore), Val(updatedScore) + Val(updatedScore) * _graceMark / 100), 100)
-                                                                            End If
-                                                                            currentMonthScoreData(rowCounter, columnCounter) = Val(updatedScore)
-                                                                        End If
-                                                                    End If
-                                                                End If
+                        If currentFileName IsNot Nothing AndAlso previousFileName IsNot Nothing Then
+                            Dim currentMonthScoreData As Object(,) = Nothing
+                            Dim previousMonthScoreData As Object(,) = Nothing
+                            OnHeartbeat(String.Format("Opening {0}", currentFileName))
+                            Using xl As New ExcelHelper(currentFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                AddHandler xl.Heartbeat, AddressOf OnHeartbeat
+                                AddHandler xl.WaitingFor, AddressOf OnWaitingFor
+                                Try
+                                    OnHeartbeat(String.Format("Checking schema {0}", currentFileName))
+                                    xl.CheckExcelSchema(scoreFileSchema.Values.ToArray)
+                                    OnHeartbeat(String.Format("Reading {0}", currentFileName))
+                                    currentMonthScoreData = xl.GetExcelInMemory()
+                                Catch ex As Exception
+                                    OnHeartbeatError(ex.Message)
+                                End Try
+                            End Using
+                            OnHeartbeat(String.Format("Opening {0}", previousFileName))
+                            Using xl As New ExcelHelper(previousFileName, ExcelHelper.ExcelOpenStatus.OpenExistingForReadWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                                AddHandler xl.Heartbeat, AddressOf OnHeartbeat
+                                AddHandler xl.WaitingFor, AddressOf OnWaitingFor
+                                Try
+                                    OnHeartbeat(String.Format("Checking schema {0}", previousFileName))
+                                    xl.CheckExcelSchema(scoreFileSchema.Values.ToArray)
+                                    OnHeartbeat(String.Format("Reading {0}", previousFileName))
+                                    previousMonthScoreData = xl.GetExcelInMemory()
+                                Catch ex As Exception
+                                    OnHeartbeatError(ex.Message)
+                                End Try
+                            End Using
+                            If currentMonthScoreData IsNot Nothing AndAlso previousMonthScoreData IsNot Nothing Then
+                                Dim practice As String = Path.GetFileName(currentFileName).Split("_")(0)
+                                For rowCounter As Integer = 2 To currentMonthScoreData.GetLength(0) - 1
+                                    OnHeartbeat(String.Format("Replacing Max score {0}/{1}. File:{2}", rowCounter, currentMonthScoreData.GetLength(0) - 1, currentFileName))
+                                    _cts.Token.ThrowIfCancellationRequested()
+                                    Dim empID As String = currentMonthScoreData(rowCounter, 1)
+                                    If empID IsNot Nothing Then
+                                        Dim previousScoreRow As Integer = _cmn.GetRowOf2DArray(previousMonthScoreData, 1, empID, True)
+                                        If previousScoreRow <> Integer.MinValue Then
+                                            For columnCounter As Integer = 3 To currentMonthScoreData.GetLength(1) - 1
+                                                _cts.Token.ThrowIfCancellationRequested()
+                                                Dim columnName As String = currentMonthScoreData(1, columnCounter)
+                                                Dim currentScore As String = currentMonthScoreData(rowCounter, columnCounter)
+                                                Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
+                                                Dim previousScore As String = Nothing
+                                                If previousScoreColumn <> Integer.MinValue Then
+                                                    previousScore = previousMonthScoreData(previousScoreRow, previousScoreColumn)
+                                                End If
+                                                If previousScore IsNot Nothing AndAlso IsNumeric(previousScore) Then
+                                                    Dim updatedScore As Decimal = Decimal.MinValue
+                                                    If _availableScoreUpdates.ContainsKey(practice.Trim.ToUpper) Then
+                                                        If _availableScoreUpdates(practice.Trim.ToUpper) IsNot Nothing AndAlso
+                                                                _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData IsNot Nothing AndAlso
+                                                                _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData.ContainsKey(empID.Trim.ToUpper) Then
+                                                            Dim scoreDetails As ScoreData =
+                                                                    _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData(empID.Trim.ToUpper).Find(Function(x)
+                                                                                                                                                                  Return x.SkillName.ToUpper = columnName.ToUpper
+                                                                                                                                                              End Function)
+                                                            If scoreDetails IsNot Nothing AndAlso scoreDetails.CurrentMonthScore > scoreDetails.PreviousMonthScore Then
+                                                                updatedScore = Math.Min(100, previousScore + (scoreDetails.CurrentMonthScore - scoreDetails.PreviousMonthScore) / 100)
                                                             End If
                                                         End If
                                                     End If
-                                                Next
-                                            End If
+
+                                                    currentMonthScoreData(rowCounter, columnCounter) = Math.Ceiling(Math.Max(Val(currentScore), Math.Max(updatedScore, Val(previousScore))))
+                                                End If
+                                            Next
                                         End If
-                                    Next
-                                    Dim outputFileName As String = Path.Combine(_outputDirectoryName, Path.GetFileName(currentFileName))
-                                    If File.Exists(outputFileName) Then File.Delete(outputFileName)
-                                    Using xl As New ExcelHelper(outputFileName, ExcelHelper.ExcelOpenStatus.OpenAfreshForWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
-                                        AddHandler xl.Heartbeat, AddressOf OnHeartbeat
-                                        AddHandler xl.WaitingFor, AddressOf OnWaitingFor
-                                        OnHeartbeat(String.Format("Writting {0}", outputFileName))
-                                        Dim range As String = xl.GetNamedRange(1, currentMonthScoreData.GetLength(0) - 1, 1, currentMonthScoreData.GetLength(1) - 1)
-                                        xl.WriteArrayToExcel(currentMonthScoreData, range)
-                                        xl.SaveExcel()
-                                    End Using
+                                    End If
+                                Next
+
+                                If _availableScoreUpdates.ContainsKey(practice.Trim.ToUpper) Then
+                                    If _availableScoreUpdates(practice.Trim.ToUpper) IsNot Nothing AndAlso
+                                        _availableScoreUpdates(practice.Trim.ToUpper).ProjectedEmployeeData IsNot Nothing AndAlso
+                                        _availableScoreUpdates(practice.Trim.ToUpper).ProjectedEmployeeData.Count Then
+                                        Dim practiceData As PracticeDetails = _availableScoreUpdates(practice.Trim.ToUpper)
+
+                                        Dim totalEmpCount As Integer = 0
+                                        Dim itPiEmpCount As Integer = 0
+                                        For Each runningEmp In practiceData.ProjectedEmployeeData.Keys
+                                            totalEmpCount += 1
+                                            OnHeartbeat(String.Format("Updating Current Month modulated score {0}/{1}. Practice:{2}", totalEmpCount, practiceData.ProjectedEmployeeData.Count, practice))
+                                            Dim projectedData As ProjectedDetails = practiceData.ProjectedEmployeeData(runningEmp)
+                                            If projectedData IsNot Nothing AndAlso projectedData.Foundation IsNot Nothing AndAlso projectedData.Foundation.TowerBucketData IsNot Nothing Then
+                                                UpdateCurrentMonthModulatedScore(projectedData.Foundation.TowerBucketData, currentMonthScoreData, runningEmp)
+                                            End If
+                                            If projectedData IsNot Nothing AndAlso projectedData.ITPi IsNot Nothing AndAlso projectedData.ITPi.TowerBucketData IsNot Nothing Then
+                                                UpdateCurrentMonthModulatedScore(projectedData.ITPi.TowerBucketData, currentMonthScoreData, runningEmp)
+                                            End If
+
+                                            Dim projectedStatus As String = projectedData.ProjectedStatus
+                                            If projectedStatus IsNot Nothing AndAlso
+                                                    (projectedStatus.ToUpper = "I" OrElse
+                                                    projectedStatus.ToUpper = "T" OrElse
+                                                    projectedStatus.ToUpper = "PI" OrElse
+                                                    projectedStatus.ToUpper = "I T PI") Then
+                                                itPiEmpCount += 1
+                                            End If
+                                        Next
+                                        practiceData.CurrentMonthITPiEmployeeCount = itPiEmpCount
+                                    End If
                                 End If
-                            Else
-                                OnHeartbeatError(String.Format("Perfect Pair not found. Filenames: 1. {0}, 2.{1}", runningFile, runningPairFile))
+
+                                If practiceWiseMaxScoreData Is Nothing Then practiceWiseMaxScoreData = New Dictionary(Of String, Object(,))
+                                practiceWiseMaxScoreData.Add(practice.ToUpper.Trim, currentMonthScoreData)
+
+                                If practiceWiseFilename Is Nothing Then practiceWiseFilename = New Dictionary(Of String, String)
+                                practiceWiseFilename.Add(practice.ToUpper.Trim, currentFileName)
                             End If
-                            Exit For
+                        Else
+                            OnHeartbeatError(String.Format("Perfect Pair not found. Filenames: 1. {0}, 2.{1}", runningFile, runningPairFile))
                         End If
-                    Next
-                    If Not pairFound Then
-                        OnHeartbeatError(String.Format("Pair not found. Filename: {0}. Probale reason: Filename not matching.", runningFile))
+                        Exit For
                     End If
+                Next
+                If Not pairFound Then
+                    OnHeartbeatError(String.Format("Pair not found. Filename: {0}. Probale reason: Filename not matching.", runningFile))
                 End If
-            Next
-        End Using
+            End If
+        Next
+
+        If practiceWiseMaxScoreData IsNot Nothing AndAlso practiceWiseMaxScoreData.Count > 0 Then
+            Dim newForm As New frmImpactChange(_availableScoreUpdates)
+            newForm.ShowDialog()
+
+            If _availableScoreUpdates IsNot Nothing AndAlso _availableScoreUpdates.Count > 0 Then
+                For Each runningPractice In _availableScoreUpdates.Keys
+                    If practiceWiseMaxScoreData.ContainsKey(runningPractice) Then
+                        Dim currentFileName As String = practiceWiseFilename(runningPractice)
+                        Dim currentMonthScoreData As Object(,) = practiceWiseMaxScoreData(runningPractice)
+                        Dim practiceData As PracticeDetails = _availableScoreUpdates(runningPractice.Trim.ToUpper)
+                        If practiceData.ProjectedEmployeeData.Keys IsNot Nothing AndAlso practiceData.ProjectedEmployeeData.Keys.Count > 0 Then
+                            Dim availableImpactChange As Integer = 0
+                            For Each runningEmp In practiceData.ProjectedEmployeeData
+                                Dim projectedData As ProjectedDetails = practiceData.ProjectedEmployeeData(runningEmp.Key)
+                                If projectedData.Progress Then
+                                    availableImpactChange += 1
+                                End If
+                            Next
+                            Dim mendatoryChangeCount As Integer = practiceData.CurrentMonthITPiEmployeeCount - availableImpactChange
+                            Dim requiredChangePer As Decimal = practiceData.PreviousMonthImpactPercentage + practiceData.RequiredImpactPercentage
+                            Dim requiredChangeCount As Integer = Math.Ceiling(practiceData.CurrentMonthTotalEmployeeCount * requiredChangePer / 100)
+
+                            If requiredChangeCount > mendatoryChangeCount Then
+                                Dim extraRequired As Integer = requiredChangeCount - mendatoryChangeCount
+
+                                Dim changeDone As Integer = 0
+                                Dim empCount As Integer = 0
+                                For Each runningEmp In practiceData.ProjectedEmployeeData.OrderByDescending(Function(x)
+                                                                                                                Return x.Value.Foundation.FoundationScore + x.Value.ITPi.ITPiScore
+                                                                                                            End Function)
+                                    empCount += 1
+                                    OnHeartbeat(String.Format("Updating Current Month score for impact {0}/{1}. Practice:{2}", empCount, practiceData.ProjectedEmployeeData.Count, runningPractice))
+                                    Dim projectedData As ProjectedDetails = practiceData.ProjectedEmployeeData(runningEmp.Key)
+                                    If projectedData.Progress Then
+                                        If projectedData.ITPi.ITPiScore > 40 AndAlso projectedData.ITPi.ITPiScore <= 65 Then
+                                            Dim rawScoreData As List(Of ScoreData) = Nothing
+                                            If practiceData.RawScoreUpdateData.ContainsKey(runningEmp.Key) Then
+                                                rawScoreData = practiceData.RawScoreUpdateData(runningEmp.Key)
+                                            End If
+                                            UpdateCurrentMonthScoreForITPiImpact(projectedData.ITPi, currentMonthScoreData, runningEmp.Key, rawScoreData)
+                                        End If
+                                        If projectedData.Foundation.FoundationScore > 30 AndAlso projectedData.Foundation.FoundationScore <= 40 Then
+                                            Dim rawScoreData As List(Of ScoreData) = Nothing
+                                            If practiceData.RawScoreUpdateData.ContainsKey(runningEmp.Key) Then
+                                                rawScoreData = practiceData.RawScoreUpdateData(runningEmp.Key)
+                                            End If
+                                            UpdateCurrentMonthScoreForFoundationImpact(projectedData.Foundation, currentMonthScoreData, runningEmp.Key, rawScoreData)
+                                        End If
+                                        changeDone += 1
+                                    End If
+
+                                    If changeDone >= extraRequired Then Exit For
+                                Next
+                            End If
+                        End If
+
+                            Dim outputFileName As String = Path.Combine(_outputDirectoryName, Path.GetFileName(currentFileName))
+                        If File.Exists(outputFileName) Then File.Delete(outputFileName)
+                        Using xl As New ExcelHelper(outputFileName, ExcelHelper.ExcelOpenStatus.OpenAfreshForWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
+                            AddHandler xl.Heartbeat, AddressOf OnHeartbeat
+                            AddHandler xl.WaitingFor, AddressOf OnWaitingFor
+                            OnHeartbeat(String.Format("Writting {0}", outputFileName))
+                            Dim range As String = xl.GetNamedRange(1, currentMonthScoreData.GetLength(0) - 1, 1, currentMonthScoreData.GetLength(1) - 1)
+                            xl.WriteArrayToExcel(currentMonthScoreData, range)
+                            xl.SaveExcel()
+                        End Using
+                    End If
+                Next
+            End If
+        End If
     End Function
 
     Public Async Function ProcessEmployeeData() As Task
@@ -428,6 +478,185 @@ Public Class PreProcess
         Next
     End Function
 
+#Region "Private Functions"
+    Private Sub UpdateCurrentMonthScoreForFoundationImpact(ByRef foundationData As FoundationDetails, ByRef currentMonthScoreData As Object(,), ByVal empID As String, ByVal rawScoreData As List(Of ScoreData))
+        If foundationData IsNot Nothing AndAlso foundationData.TowerBucketData IsNot Nothing AndAlso foundationData.TowerBucketData.Count > 0 Then
+            Dim expectedScore As Decimal = 41
+            While foundationData.FoundationScore < expectedScore
+                For Each runningTower In foundationData.TowerBucketData.Values.OrderByDescending(Function(x)
+                                                                                                     Return x.CurrentMonthModulatedScore
+                                                                                                 End Function)
+                    Dim wiproSkillColumnList As List(Of String) = runningTower.MappingData.WiproSkillColumnList
+                    If wiproSkillColumnList IsNot Nothing AndAlso wiproSkillColumnList.Count > 0 Then
+                        Dim skill As String = Nothing
+                        If rawScoreData IsNot Nothing AndAlso rawScoreData.Count > 0 Then
+                            For Each rawScore In rawScoreData.OrderByDescending(Function(x)
+                                                                                    Return (x.CurrentMonthScore - x.PreviousMonthScore)
+                                                                                End Function)
+                                If wiproSkillColumnList.Contains(rawScore.SkillName, StringComparer.OrdinalIgnoreCase) Then
+                                    Dim currentScoreRow As Integer = _cmn.GetRowOf2DArray(currentMonthScoreData, 1, empID, True)
+                                    Dim currentScoreColumn As Integer = _cmn.GetColumnOf2DArray(currentMonthScoreData, 1, rawScore.SkillName)
+                                    Dim currentScore As String = Nothing
+                                    If currentScoreColumn <> Integer.MinValue AndAlso currentScoreRow <> Integer.MinValue Then
+                                        currentScore = currentMonthScoreData(currentScoreRow, currentScoreColumn)
+                                        If IsNumeric(currentScore) AndAlso Val(currentScore) > 0 AndAlso Val(currentScore) < 100 Then
+                                            currentMonthScoreData(currentScoreRow, currentScoreColumn) = currentScore + 1
+
+                                            skill = rawScore.SkillName
+                                            Exit For
+                                        End If
+                                    End If
+                                End If
+                            Next
+                        End If
+                        Dim skillScore As Dictionary(Of String, Decimal) = Nothing
+                        For Each runningColumn In wiproSkillColumnList
+                            _cts.Token.ThrowIfCancellationRequested()
+                            Dim currentScoreRow As Integer = _cmn.GetRowOf2DArray(currentMonthScoreData, 1, empID, True)
+                            Dim currentScoreColumn As Integer = _cmn.GetColumnOf2DArray(currentMonthScoreData, 1, runningColumn)
+                            Dim currentScore As String = Nothing
+                            If currentScoreColumn <> Integer.MinValue AndAlso currentScoreRow <> Integer.MinValue Then
+                                currentScore = currentMonthScoreData(currentScoreRow, currentScoreColumn)
+                                If IsNumeric(currentScore.Trim) Then
+                                    If skillScore Is Nothing Then skillScore = New Dictionary(Of String, Decimal)
+                                    If Not skillScore.ContainsKey(runningColumn) Then skillScore.Add(runningColumn, currentScore)
+                                End If
+                            End If
+                        Next
+                        If skillScore IsNot Nothing AndAlso skillScore.Count > 0 Then
+                            For Each runningSkillScore In skillScore.OrderByDescending(Function(x)
+                                                                                           Return x.Value
+                                                                                       End Function)
+                                If skill Is Nothing OrElse runningSkillScore.Key.ToUpper <> skill.ToUpper Then
+                                    Dim currentScoreRow As Integer = _cmn.GetRowOf2DArray(currentMonthScoreData, 1, empID, True)
+                                    Dim currentScoreColumn As Integer = _cmn.GetColumnOf2DArray(currentMonthScoreData, 1, runningSkillScore.Key)
+                                    Dim currentScore As String = Nothing
+                                    If currentScoreColumn <> Integer.MinValue AndAlso currentScoreRow <> Integer.MinValue Then
+                                        currentScore = currentMonthScoreData(currentScoreRow, currentScoreColumn)
+                                        If IsNumeric(currentScore) AndAlso Val(currentScore) > 0 AndAlso Val(currentScore) < 100 Then
+                                            currentMonthScoreData(currentScoreRow, currentScoreColumn) = currentScore + 1
+                                            Exit For
+                                        End If
+                                    End If
+                                End If
+                            Next
+                        End If
+                    End If
+
+                    Dim currentMonthModulatedScore As Decimal = Decimal.MinValue
+                    If wiproSkillColumnList IsNot Nothing AndAlso wiproSkillColumnList.Count > 0 Then
+                        For Each runningColumn In wiproSkillColumnList
+                            _cts.Token.ThrowIfCancellationRequested()
+                            Dim currentScoreRow As Integer = _cmn.GetRowOf2DArray(currentMonthScoreData, 1, empID, True)
+                            Dim currentScoreColumn As Integer = _cmn.GetColumnOf2DArray(currentMonthScoreData, 1, runningColumn)
+                            Dim currentScore As String = Nothing
+                            If currentScoreColumn <> Integer.MinValue AndAlso currentScoreRow <> Integer.MinValue Then
+                                currentScore = currentMonthScoreData(currentScoreRow, currentScoreColumn)
+                                If IsNumeric(currentScore.Trim) Then
+                                    currentMonthModulatedScore = Math.Max(currentMonthModulatedScore, Val(currentScore.Trim))
+                                End If
+                            End If
+                        Next
+                    End If
+                    runningTower.CurrentMonthModulatedScore = currentMonthModulatedScore
+
+                    If foundationData.FoundationScore >= expectedScore Then Exit For
+                Next
+            End While
+        End If
+    End Sub
+
+    Private Sub UpdateCurrentMonthScoreForITPiImpact(ByRef itPiData As ITPiDetails, ByRef currentMonthScoreData As Object(,), ByVal empID As String, ByVal rawScoreData As List(Of ScoreData))
+        If itPiData IsNot Nothing AndAlso itPiData.TowerBucketData IsNot Nothing AndAlso itPiData.TowerBucketData.Count > 0 Then
+            Dim expectedScore As Decimal = 66
+            For Each runningTower In itPiData.TowerBucketData.Values.OrderByDescending(Function(x)
+                                                                                           Return x.CurrentMonthModulatedScore
+                                                                                       End Function)
+                Dim wiproSkillColumnList As List(Of String) = runningTower.MappingData.WiproSkillColumnList
+                If wiproSkillColumnList IsNot Nothing AndAlso wiproSkillColumnList.Count > 0 Then
+                    Dim skill As String = Nothing
+                    If rawScoreData IsNot Nothing AndAlso rawScoreData.Count > 0 Then
+                        For Each rawScore In rawScoreData.OrderByDescending(Function(x)
+                                                                                Return (x.CurrentMonthScore - x.PreviousMonthScore)
+                                                                            End Function)
+                            If wiproSkillColumnList.Contains(rawScore.SkillName, StringComparer.OrdinalIgnoreCase) Then
+                                Dim currentScoreRow As Integer = _cmn.GetRowOf2DArray(currentMonthScoreData, 1, empID, True)
+                                Dim currentScoreColumn As Integer = _cmn.GetColumnOf2DArray(currentMonthScoreData, 1, rawScore.SkillName)
+                                Dim currentScore As String = Nothing
+                                If currentScoreColumn <> Integer.MinValue AndAlso currentScoreRow <> Integer.MinValue Then
+                                    currentScore = currentMonthScoreData(currentScoreRow, currentScoreColumn)
+                                    If IsNumeric(currentScore) AndAlso Val(currentScore) > 0 Then
+                                        currentMonthScoreData(currentScoreRow, currentScoreColumn) = expectedScore
+
+                                        skill = rawScore.SkillName
+                                        Exit For
+                                    End If
+                                End If
+                            End If
+                        Next
+                    End If
+                    Dim skillScore As Dictionary(Of String, Decimal) = Nothing
+                    For Each runningColumn In wiproSkillColumnList
+                        _cts.Token.ThrowIfCancellationRequested()
+                        Dim currentScoreRow As Integer = _cmn.GetRowOf2DArray(currentMonthScoreData, 1, empID, True)
+                        Dim currentScoreColumn As Integer = _cmn.GetColumnOf2DArray(currentMonthScoreData, 1, runningColumn)
+                        Dim currentScore As String = Nothing
+                        If currentScoreColumn <> Integer.MinValue AndAlso currentScoreRow <> Integer.MinValue Then
+                            currentScore = currentMonthScoreData(currentScoreRow, currentScoreColumn)
+                            If IsNumeric(currentScore.Trim) Then
+                                If skillScore Is Nothing Then skillScore = New Dictionary(Of String, Decimal)
+                                If Not skillScore.ContainsKey(runningColumn) Then skillScore.Add(runningColumn, currentScore)
+                            End If
+                        End If
+                    Next
+                    If skillScore IsNot Nothing AndAlso skillScore.Count > 0 Then
+                        For Each runningSkillScore In skillScore.OrderByDescending(Function(x)
+                                                                                       Return x.Value
+                                                                                   End Function)
+                            If skill Is Nothing OrElse runningSkillScore.Key.ToUpper <> skill.ToUpper Then
+                                Dim currentScoreRow As Integer = _cmn.GetRowOf2DArray(currentMonthScoreData, 1, empID, True)
+                                Dim currentScoreColumn As Integer = _cmn.GetColumnOf2DArray(currentMonthScoreData, 1, runningSkillScore.Key)
+                                Dim currentScore As String = Nothing
+                                If currentScoreColumn <> Integer.MinValue AndAlso currentScoreRow <> Integer.MinValue Then
+                                    currentScore = currentMonthScoreData(currentScoreRow, currentScoreColumn)
+                                    If IsNumeric(currentScore) AndAlso Val(currentScore) > 0 Then
+                                        currentMonthScoreData(currentScoreRow, currentScoreColumn) = expectedScore
+                                        Exit For
+                                    End If
+                                End If
+                            End If
+                        Next
+                    End If
+                End If
+                Exit For
+            Next
+        End If
+    End Sub
+
+    Private Sub UpdateCurrentMonthModulatedScore(ByRef towerData As Dictionary(Of String, TowerDetails), ByVal currentMonthScoreData As Object(,), ByVal empID As String)
+        If towerData IsNot Nothing AndAlso towerData.Count > 0 Then
+            For Each runningTower In towerData.Values
+                Dim currentMonthModulatedScore As Decimal = Decimal.MinValue
+                Dim wiproSkillColumnList As List(Of String) = runningTower.MappingData.WiproSkillColumnList
+                If wiproSkillColumnList IsNot Nothing AndAlso wiproSkillColumnList.Count > 0 Then
+                    For Each runningColumn In wiproSkillColumnList
+                        _cts.Token.ThrowIfCancellationRequested()
+                        Dim currentScoreRow As Integer = _cmn.GetRowOf2DArray(currentMonthScoreData, 1, empID, True)
+                        Dim currentScoreColumn As Integer = _cmn.GetColumnOf2DArray(currentMonthScoreData, 1, runningColumn)
+                        Dim currentScore As String = Nothing
+                        If currentScoreColumn <> Integer.MinValue AndAlso currentScoreRow <> Integer.MinValue Then
+                            currentScore = currentMonthScoreData(currentScoreRow, currentScoreColumn)
+                            If IsNumeric(currentScore.Trim) Then
+                                currentMonthModulatedScore = Math.Max(currentMonthModulatedScore, Val(currentScore.Trim))
+                            End If
+                        End If
+                    Next
+                End If
+                runningTower.CurrentMonthModulatedScore = currentMonthModulatedScore
+            Next
+        End If
+    End Sub
+
     Private Function GetFoundationList(ByVal mappingData As Object(,)) As List(Of String)
         Dim ret As List(Of String) = Nothing
         If mappingData IsNot Nothing Then
@@ -445,6 +674,8 @@ Public Class PreProcess
         End If
         Return ret
     End Function
+#End Region
+
 #Region "IDisposable Support"
     Private disposedValue As Boolean ' To detect redundant calls
 

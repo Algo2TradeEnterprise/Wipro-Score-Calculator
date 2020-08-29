@@ -219,24 +219,14 @@ Public Class frmAllProcess
 #End Region
 
     Private ReadOnly _preProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
-    Private ReadOnly _preProcessScoreModifierFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process", "Score Modifier")
     Private ReadOnly _inProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "In Process")
     Private ReadOnly _postProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
 
-    Private _availableScoreUpdates As Dictionary(Of String, Dictionary(Of String, List(Of ScoreData))) = Nothing
+    Private _availableScoreUpdates As Dictionary(Of String, PracticeDetails) = Nothing
 
-    Private _addGraceMark As Boolean = False
     Private _canceller As CancellationTokenSource
     Private Sub frmPreProcess_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         txtFolderpath.Text = My.Settings.FolderPath
-        chkbZeroScoreReplacement.Checked = My.Settings.ZeroScoreReplace
-        chkbMaxScoreReplacement.Checked = My.Settings.MaxScoreReplace
-        chkbFndtnCmplt.Checked = My.Settings.FoundationPendingToComplete
-        chkbITPi.Checked = My.Settings.FoundationCompleteToITPi
-        chkbFndtnCmplt_CheckedChanged(sender, e)
-        chkbITPi_CheckedChanged(sender, e)
-        txtFndtnCmplt.Text = My.Settings.FoundationPendingToCompleteMinScore
-        txtITPi.Text = My.Settings.FoundationCompleteToITPiMinScore
         chkbAutoProcess.Checked = My.Settings.AutoProcessAllStep
 
         SetObjectEnableDisable_ThreadSafe(btnStop, False)
@@ -252,32 +242,17 @@ Public Class frmAllProcess
         _canceller.Cancel()
     End Sub
 
-    Private Async Sub btnStartWithScoreAdjustment_Click(sender As Object, e As EventArgs) Handles btnStartWithScoreAdjustment.Click
-        _addGraceMark = True
-
-        Await Task.Run(AddressOf StartProcessingAsync).ConfigureAwait(False)
-    End Sub
-
-    Private Async Sub btnStartWithoutScoreAdjustment_Click(sender As Object, e As EventArgs) Handles btnStartWithoutScoreAdjustment.Click
-        _addGraceMark = False
-
+    Private Async Sub btnStart_Click(sender As Object, e As EventArgs) Handles btnStart.Click
         Await Task.Run(AddressOf StartProcessingAsync).ConfigureAwait(False)
     End Sub
 
     Private Async Function StartProcessingAsync() As Task
         My.Settings.FolderPath = GetTextBoxText_ThreadSafe(txtFolderpath)
         My.Settings.AutoProcessAllStep = GetCheckBoxChecked_ThreadSafe(chkbAutoProcess)
-        My.Settings.FoundationPendingToComplete = GetCheckBoxChecked_ThreadSafe(chkbFndtnCmplt)
-        My.Settings.FoundationCompleteToITPi = GetCheckBoxChecked_ThreadSafe(chkbITPi)
-        My.Settings.FoundationPendingToCompleteMinScore = GetTextBoxText_ThreadSafe(txtFndtnCmplt)
-        My.Settings.FoundationCompleteToITPiMinScore = GetTextBoxText_ThreadSafe(txtITPi)
-        My.Settings.ZeroScoreReplace = GetCheckBoxChecked_ThreadSafe(chkbZeroScoreReplacement)
-        My.Settings.MaxScoreReplace = GetCheckBoxChecked_ThreadSafe(chkbMaxScoreReplacement)
         My.Settings.Save()
 
         SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, False)
-        SetObjectEnableDisable_ThreadSafe(btnStartWithScoreAdjustment, False)
-        SetObjectEnableDisable_ThreadSafe(btnStartWithoutScoreAdjustment, False)
+        SetObjectEnableDisable_ThreadSafe(btnStart, False)
         SetObjectEnableDisable_ThreadSafe(btnStop, True)
         Try
             _canceller = New CancellationTokenSource
@@ -285,13 +260,15 @@ Public Class frmAllProcess
 
             Dim currentMonthRawScoreFiles As List(Of String) = Nothing
             Dim previousMonthRawScoreFiles As List(Of String) = Nothing
+            Dim previousMonthOutputFiles As List(Of String) = Nothing
+            Dim mappingFile As String = Nothing
 
             'Pre Process
-            StartFileDistribution(currentMonthRawScoreFiles, previousMonthRawScoreFiles)
+            StartFileDistribution(currentMonthRawScoreFiles, previousMonthRawScoreFiles, previousMonthOutputFiles, mappingFile)
 
             If currentMonthRawScoreFiles IsNot Nothing AndAlso currentMonthRawScoreFiles.Count > 0 AndAlso
                 previousMonthRawScoreFiles IsNot Nothing AndAlso previousMonthRawScoreFiles.Count > 0 Then
-                Using scrUpdtChkHlpr As New ScoreUpdateChecker(_canceller, currentMonthRawScoreFiles, previousMonthRawScoreFiles)
+                Using scrUpdtChkHlpr As New ScoreUpdateChecker(_canceller, currentMonthRawScoreFiles, previousMonthRawScoreFiles, previousMonthOutputFiles, mappingFile)
                     AddHandler scrUpdtChkHlpr.Heartbeat, AddressOf OnHeartbeat
                     AddHandler scrUpdtChkHlpr.HeartbeatError, AddressOf OnHeartbeatError
                     AddHandler scrUpdtChkHlpr.WaitingFor, AddressOf OnWaitingFor
@@ -299,12 +276,11 @@ Public Class frmAllProcess
                     AddHandler scrUpdtChkHlpr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
 
                     OnHeartbeatMain("Checking score update between previous month and current month score")
-                    _availableScoreUpdates = Await scrUpdtChkHlpr.GetScoreUpdateData().ConfigureAwait(False)
+                    _availableScoreUpdates = Await scrUpdtChkHlpr.CheckScoreUpdateAsync().ConfigureAwait(False)
                 End Using
             End If
 
-            Await StartScoreModifyProcessingAsync().ConfigureAwait(False)
-            Await StartMaxScoreReplacementProcessingAsync(_addGraceMark).ConfigureAwait(False)
+            Await StartPreProcessingAsync().ConfigureAwait(False)
 
             If GetCheckBoxChecked_ThreadSafe(chkbAutoProcess) Then
                 'In Process
@@ -327,15 +303,15 @@ Public Class frmAllProcess
             MessageBox.Show(ex.ToString, "Score Calculator", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
             SetObjectEnableDisable_ThreadSafe(grpFolderBrowse, True)
-            SetObjectEnableDisable_ThreadSafe(btnStartWithScoreAdjustment, True)
-            SetObjectEnableDisable_ThreadSafe(btnStartWithoutScoreAdjustment, True)
+            SetObjectEnableDisable_ThreadSafe(btnStart, True)
             SetObjectEnableDisable_ThreadSafe(btnStop, False)
             OnHeartbeatMain("Process complete")
             OnHeartbeat("")
         End Try
     End Function
 
-    Private Sub StartFileDistribution(ByRef currentMonthRawScoreFiles As List(Of String), ByRef previousMonthRawScoreFiles As List(Of String))
+    Private Sub StartFileDistribution(ByRef currentMonthRawScoreFiles As List(Of String), ByRef previousMonthRawScoreFiles As List(Of String),
+                                      ByRef previousMonthOutputFiles As List(Of String), ByRef mappingFile As String)
         OnHeartbeatMain("Distributing files to there required folders")
         Dim inputFolder As String = GetTextBoxText_ThreadSafe(txtFolderpath)
 
@@ -353,6 +329,8 @@ Public Class frmAllProcess
         For Each runningFile In Directory.GetFiles(inputFolder)
             _canceller.Token.ThrowIfCancellationRequested()
             If runningFile.ToUpper.Contains("MAPPING") Then
+                mappingFile = runningFile
+
                 Dim preProcessMappingFile As String = Path.Combine(_preProcessFolder, Path.GetFileName(runningFile))
                 If File.Exists(preProcessMappingFile) Then File.Delete(preProcessMappingFile)
                 File.Copy(runningFile, preProcessMappingFile)
@@ -375,16 +353,13 @@ Public Class frmAllProcess
         For Each runningFile In Directory.GetFiles(inputFolder)
             _canceller.Token.ThrowIfCancellationRequested()
             If runningFile.ToUpper.Contains("OUTPUT") Then
-                Dim preProcessScrMdfrFile As String = Path.Combine(_preProcessScoreModifierFolder, Path.GetFileName(runningFile))
-                If File.Exists(preProcessScrMdfrFile) Then File.Delete(preProcessScrMdfrFile)
-                File.Copy(runningFile, preProcessScrMdfrFile)
+                If previousMonthOutputFiles Is Nothing Then previousMonthOutputFiles = New List(Of String)
+                previousMonthOutputFiles.Add(runningFile)
 
-                previousMonth = Path.GetFileName(preProcessScrMdfrFile).Substring(Path.GetFileName(preProcessScrMdfrFile).Count - 13)
+                previousMonth = Path.GetFileName(runningFile).Substring(Path.GetFileName(runningFile).Count - 13)
             End If
         Next
 
-        Dim mdfyPndngToCmplt As Boolean = GetCheckBoxChecked_ThreadSafe(chkbFndtnCmplt)
-        Dim mdfyCmpltToITPi As Boolean = GetCheckBoxChecked_ThreadSafe(chkbITPi)
         If previousMonth IsNot Nothing Then
             For Each runningFile In Directory.GetFiles(inputFolder)
                 _canceller.Token.ThrowIfCancellationRequested()
@@ -397,73 +372,40 @@ Public Class frmAllProcess
                         If currentMonthRawScoreFiles Is Nothing Then currentMonthRawScoreFiles = New List(Of String)
                         currentMonthRawScoreFiles.Add(runningFile)
 
-                        If mdfyPndngToCmplt OrElse mdfyCmpltToITPi Then
-                            Dim preProcessScrMdfrFile As String = Path.Combine(_preProcessScoreModifierFolder, Path.GetFileName(runningFile))
-                            If File.Exists(preProcessScrMdfrFile) Then File.Delete(preProcessScrMdfrFile)
-                            File.Copy(runningFile, preProcessScrMdfrFile)
-                        Else
-                            Dim preProcessFile As String = Path.Combine(_preProcessFolder, Path.GetFileName(runningFile))
-                            If File.Exists(preProcessFile) Then File.Delete(preProcessFile)
-                            File.Copy(runningFile, preProcessFile)
-                        End If
+                        Dim preProcessFile As String = Path.Combine(_preProcessFolder, Path.GetFileName(runningFile))
+                        If File.Exists(preProcessFile) Then File.Delete(preProcessFile)
+                        File.Copy(runningFile, preProcessFile)
                     End If
                 End If
             Next
         End If
     End Sub
 
-    Private Async Function StartScoreModifyProcessingAsync() As Task
-        OnHeartbeatMain("Checking Foundation Complete and I T Pi upgrade from Foundation Pending and Foundation Complete")
-        Dim mdfyPndngToCmplt As Boolean = GetCheckBoxChecked_ThreadSafe(chkbFndtnCmplt)
-        Dim mdfyPndngToCmpltMinScore As Decimal = GetTextBoxText_ThreadSafe(txtFndtnCmplt)
-        Dim mdfyCmpltToITPi As Boolean = GetCheckBoxChecked_ThreadSafe(chkbITPi)
-        Dim mdfyCmpltToITPiMinScore As Decimal = GetTextBoxText_ThreadSafe(txtITPi)
+    Private Async Function StartPreProcessingAsync() As Task
+        Dim folderPath As String = Nothing
+        Dim mappingFile As String = Nothing
+        Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
+        folderPath = directoryName
+        For Each runningFile In Directory.GetFiles(directoryName)
+            If runningFile.ToUpper.Contains("MAPPING") Then
+                mappingFile = runningFile
+                Exit For
+            End If
+        Next
+        If mappingFile Is Nothing Then Throw New ApplicationException("Mapping file not exits")
 
-        If mdfyPndngToCmplt OrElse mdfyCmpltToITPi Then
-            Dim directoryPath As String = _preProcessScoreModifierFolder
-            Dim empFile As String = Nothing
+        Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile, _availableScoreUpdates)
+            AddHandler prePrcsHlpr.Heartbeat, AddressOf OnHeartbeat
+            AddHandler prePrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
+            AddHandler prePrcsHlpr.WaitingFor, AddressOf OnWaitingFor
+            AddHandler prePrcsHlpr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
+            AddHandler prePrcsHlpr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
 
-            Using scrMdfr As New ScoreModifier(_canceller, directoryPath, mdfyPndngToCmplt, mdfyCmpltToITPi, mdfyPndngToCmpltMinScore, mdfyCmpltToITPiMinScore)
-                AddHandler scrMdfr.Heartbeat, AddressOf OnHeartbeat
-                AddHandler scrMdfr.HeartbeatError, AddressOf OnHeartbeatError
-                AddHandler scrMdfr.WaitingFor, AddressOf OnWaitingFor
-                AddHandler scrMdfr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
-                AddHandler scrMdfr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
-
-                Await scrMdfr.ProcessDataAsync().ConfigureAwait(False)
-            End Using
-        End If
-    End Function
-
-    Private Async Function StartMaxScoreReplacementProcessingAsync(ByVal addGraceMark As Boolean) As Task
-        Dim zeroScoreReplace As Boolean = GetCheckBoxChecked_ThreadSafe(chkbZeroScoreReplacement)
-        Dim maxScoreReplace As Boolean = GetCheckBoxChecked_ThreadSafe(chkbMaxScoreReplacement)
-
-        If zeroScoreReplace OrElse maxScoreReplace Then
-            Dim folderPath As String = Nothing
-            Dim mappingFile As String = Nothing
-            Dim directoryName As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Pre Process")
-            folderPath = directoryName
-            For Each runningFile In Directory.GetFiles(directoryName)
-                If runningFile.ToUpper.Contains("MAPPING") Then
-                    mappingFile = runningFile
-                End If
-            Next
-            If mappingFile Is Nothing Then Throw New ApplicationException("Mapping file not exits")
-
-            Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile, zeroScoreReplace, maxScoreReplace, addGraceMark, _availableScoreUpdates)
-                AddHandler prePrcsHlpr.Heartbeat, AddressOf OnHeartbeat
-                AddHandler prePrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
-                AddHandler prePrcsHlpr.WaitingFor, AddressOf OnWaitingFor
-                AddHandler prePrcsHlpr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
-                AddHandler prePrcsHlpr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
-
-                OnHeartbeatMain("Copying necessary data and sheets from previous moth BFSI file")
-                Await prePrcsHlpr.ProcessEmployeeData().ConfigureAwait(False)
-                OnHeartbeatMain("Updating zero score and max score data from previous month score")
-                Await prePrcsHlpr.ProcessScoreData().ConfigureAwait(False)
-            End Using
-        End If
+            OnHeartbeatMain("Copying necessary data and sheets from previous moth BFSI file")
+            Await prePrcsHlpr.ProcessEmployeeData().ConfigureAwait(False)
+            OnHeartbeatMain("Updating max score data from previous month score and modifying score for impact change")
+            Await prePrcsHlpr.ProcessScoreData().ConfigureAwait(False)
+        End Using
     End Function
 
     Private Async Function StartInProcessing() As Task
@@ -516,14 +458,4 @@ Public Class frmAllProcess
             Await pstPrcsHlpr.ProcessData().ConfigureAwait(False)
         End Using
     End Function
-
-    Private Sub chkbFndtnCmplt_CheckedChanged(sender As Object, e As EventArgs) Handles chkbFndtnCmplt.CheckedChanged
-        lblFndtnCmplt.Visible = chkbFndtnCmplt.Checked
-        txtFndtnCmplt.Visible = chkbFndtnCmplt.Checked
-    End Sub
-
-    Private Sub chkbITPi_CheckedChanged(sender As Object, e As EventArgs) Handles chkbITPi.CheckedChanged
-        lblITPi.Visible = chkbITPi.Checked
-        txtITPi.Visible = chkbITPi.Checked
-    End Sub
 End Class

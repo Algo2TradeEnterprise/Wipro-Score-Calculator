@@ -79,10 +79,10 @@
   <ItemGroup>
     <Compile Include="ASG.vb" />
     <Compile Include="Common.vb" />
-    <Compile Include="frmScoreManagement.Designer.vb">
-      <DependentUpon>frmScoreManagement.vb</DependentUpon>
+    <Compile Include="frmImpactChange.Designer.vb">
+      <DependentUpon>frmImpactChange.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmScoreManagement.vb">
+    <Compile Include="frmImpactChange.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="InProcess.vb" />
@@ -109,24 +109,35 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="PostProcess.vb" />
+    <Compile Include="PracticeDetails.vb" />
     <Compile Include="PreProcess.vb" />
+    <Compile Include="ProjectedDetails.vb" />
     <Compile Include="ScoreData.vb" />
-    <Compile Include="ScoreManager.vb" />
-    <Compile Include="ScoreModifier.vb" />
     <Compile Include="ScoreUpdateChecker.vb" />
+    <Compile Include="MappingDetails.vb" />
+    <Compile Include="TowerDetails.vb" />
+    <Compile Include="ucImpact.Designer.vb">
+      <DependentUpon>ucImpact.vb</DependentUpon>
+    </Compile>
+    <Compile Include="ucImpact.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="frmAllProcess.resx">
       <DependentUpon>frmAllProcess.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmScoreManagement.resx">
-      <DependentUpon>frmScoreManagement.vb</DependentUpon>
+    <EmbeddedResource Include="frmImpactChange.resx">
+      <DependentUpon>frmImpactChange.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.vb</LastGenOutput>
       <CustomToolNamespace>My.Resources</CustomToolNamespace>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ucImpact.resx">
+      <DependentUpon>ucImpact.vb</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
