@@ -819,7 +819,7 @@ Namespace DAL
                 Dim ptn As Integer = 1
                 For Each itm In sortList
                     Dim pi As PivotItem = field.PivotItems(itm)
-                    If Not pi Is Nothing Then
+                    If pi IsNot Nothing AndAlso pi.Name.ToUpper = itm.ToUpper Then
                         If pi.Visible = True Then
                             pi.Position = ptn
                             ptn = ptn + 1
