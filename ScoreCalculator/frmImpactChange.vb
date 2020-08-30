@@ -101,13 +101,13 @@
             Next
         End If
 
-        If MsgBox(String.Format("Previous Month: {0}{1}Current Month Projected:{2}{3}Current Month Future:{4}{5}Do you want to proceed?",
+        If MessageBox.Show(String.Format("Previous Month: {0}{1}Current Month Projected: {2}{3}Current Month Future: {4}{5}Do you want to proceed?",
                              Math.Round((preITpiEmpCount / preTotalEmpCount) * 100, 2),
                              vbNewLine,
                              Math.Round((curITpiEmpCount / curTotalEmpCount) * 100, 2),
                              vbNewLine,
                              Math.Round((reqEmpCount / curTotalEmpCount) * 100, 2),
-                             vbNewLine), MsgBoxStyle.YesNo) = MsgBoxResult.Yes Then
+                             vbNewLine), "Impact Change", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = MsgBoxResult.Yes Then
             If _practiceData IsNot Nothing AndAlso _practiceData.Count > 0 Then
                 For Each runningPractice In _practiceData
                     If runningPractice.Key = "DAAI" Then

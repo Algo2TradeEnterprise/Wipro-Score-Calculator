@@ -157,7 +157,7 @@ Public Class PreProcess
                             If currentMonthScoreData IsNot Nothing AndAlso previousMonthScoreData IsNot Nothing Then
                                 Dim practice As String = Path.GetFileName(currentFileName).Split("_")(0)
                                 For rowCounter As Integer = 2 To currentMonthScoreData.GetLength(0) - 1
-                                    OnHeartbeat(String.Format("Replacing Max score {0}/{1}. File:{2}", rowCounter, currentMonthScoreData.GetLength(0) - 1, currentFileName))
+                                    OnHeartbeat(String.Format("Replacing Max score {0}/{1}. Practice:{2}", rowCounter, currentMonthScoreData.GetLength(0) - 1, practice))
                                     _cts.Token.ThrowIfCancellationRequested()
                                     Dim empID As String = currentMonthScoreData(rowCounter, 1)
                                     If empID IsNot Nothing Then
@@ -246,6 +246,7 @@ Public Class PreProcess
         Next
 
         If practiceWiseMaxScoreData IsNot Nothing AndAlso practiceWiseMaxScoreData.Count > 0 Then
+            OnHeartbeat("Checking for impact change")
             Dim newForm As New frmImpactChange(_availableScoreUpdates)
             newForm.ShowDialog()
 
@@ -285,15 +286,26 @@ Public Class PreProcess
                                                 rawScoreData = practiceData.RawScoreUpdateData(runningEmp.Key)
                                             End If
                                             UpdateCurrentMonthScoreForITPiImpact(projectedData.ITPi, currentMonthScoreData, runningEmp.Key, rawScoreData)
+                                            changeDone += 1
                                         End If
                                         If projectedData.Foundation.FoundationScore > 30 AndAlso projectedData.Foundation.FoundationScore <= 40 Then
-                                            Dim rawScoreData As List(Of ScoreData) = Nothing
-                                            If practiceData.RawScoreUpdateData.ContainsKey(runningEmp.Key) Then
-                                                rawScoreData = practiceData.RawScoreUpdateData(runningEmp.Key)
+                                            If projectedData.Foundation.TowerBucketData IsNot Nothing AndAlso projectedData.Foundation.TowerBucketData.Count > 0 Then
+                                                Dim weightageSum As Decimal = 0
+                                                For Each runningTower In projectedData.Foundation.TowerBucketData.Values
+                                                    If runningTower.CurrentMonthModulatedScore > 0 Then
+                                                        weightageSum += runningTower.MappingData.Weightage
+                                                    End If
+                                                Next
+                                                If weightageSum >= 41 Then
+                                                    Dim rawScoreData As List(Of ScoreData) = Nothing
+                                                    If practiceData.RawScoreUpdateData.ContainsKey(runningEmp.Key) Then
+                                                        rawScoreData = practiceData.RawScoreUpdateData(runningEmp.Key)
+                                                    End If
+                                                    UpdateCurrentMonthScoreForFoundationImpact(projectedData.Foundation, currentMonthScoreData, runningEmp.Key, rawScoreData)
+                                                    changeDone += 1
+                                                End If
                                             End If
-                                            UpdateCurrentMonthScoreForFoundationImpact(projectedData.Foundation, currentMonthScoreData, runningEmp.Key, rawScoreData)
                                         End If
-                                        changeDone += 1
                                     End If
 
                                     If changeDone >= extraRequired Then Exit For
