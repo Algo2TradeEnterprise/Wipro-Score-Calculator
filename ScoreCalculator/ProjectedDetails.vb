@@ -10,7 +10,23 @@
                  PreviousMonthStatusWithFoundation.ToUpper = "FOUNDATION COMPLETE") Then
                 If Me.Foundation IsNot Nothing AndAlso Me.Foundation.FoundationScore > 30 AndAlso
                     Me.ITPi IsNot Nothing AndAlso Me.ITPi.ITPiScore > 40 Then
-                    Return True
+                    If Me.Foundation.FoundationScore > 40 Then
+                        Return True
+                    Else
+                        Dim weightageSum As Decimal = 0
+                        If Me.Foundation.TowerBucketData IsNot Nothing AndAlso Me.Foundation.TowerBucketData.Count > 0 Then
+                            For Each runningTower In Me.Foundation.TowerBucketData.Values
+                                If runningTower.CurrentMonthModulatedScore > 0 Then
+                                    weightageSum += runningTower.MappingData.Weightage
+                                End If
+                            Next
+                        End If
+                        If weightageSum >= 41 Then
+                            Return True
+                        Else
+                            Return False
+                        End If
+                    End If
                 Else
                     Return False
                 End If

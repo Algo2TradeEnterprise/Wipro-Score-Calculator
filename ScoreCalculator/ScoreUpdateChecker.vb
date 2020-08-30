@@ -298,6 +298,7 @@ Public Class ScoreUpdateChecker
         If employeeScoreData IsNot Nothing AndAlso employeeScoreData.Count > 0 Then
             Dim practiceCtr As Integer = 0
             For Each runningPractice In employeeScoreData.Keys
+                practiceCtr += 1
                 _cts.Token.ThrowIfCancellationRequested()
                 Dim totalEmpCount As Integer = 0
                 Dim itPiEmpCount As Integer = 0

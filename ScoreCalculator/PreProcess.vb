@@ -289,22 +289,12 @@ Public Class PreProcess
                                             changeDone += 1
                                         End If
                                         If projectedData.Foundation.FoundationScore > 30 AndAlso projectedData.Foundation.FoundationScore <= 40 Then
-                                            If projectedData.Foundation.TowerBucketData IsNot Nothing AndAlso projectedData.Foundation.TowerBucketData.Count > 0 Then
-                                                Dim weightageSum As Decimal = 0
-                                                For Each runningTower In projectedData.Foundation.TowerBucketData.Values
-                                                    If runningTower.CurrentMonthModulatedScore > 0 Then
-                                                        weightageSum += runningTower.MappingData.Weightage
-                                                    End If
-                                                Next
-                                                If weightageSum >= 41 Then
-                                                    Dim rawScoreData As List(Of ScoreData) = Nothing
-                                                    If practiceData.RawScoreUpdateData.ContainsKey(runningEmp.Key) Then
-                                                        rawScoreData = practiceData.RawScoreUpdateData(runningEmp.Key)
-                                                    End If
-                                                    UpdateCurrentMonthScoreForFoundationImpact(projectedData.Foundation, currentMonthScoreData, runningEmp.Key, rawScoreData)
-                                                    changeDone += 1
-                                                End If
+                                            Dim rawScoreData As List(Of ScoreData) = Nothing
+                                            If practiceData.RawScoreUpdateData.ContainsKey(runningEmp.Key) Then
+                                                rawScoreData = practiceData.RawScoreUpdateData(runningEmp.Key)
                                             End If
+                                            UpdateCurrentMonthScoreForFoundationImpact(projectedData.Foundation, currentMonthScoreData, runningEmp.Key, rawScoreData)
+                                            changeDone += 1
                                         End If
                                     End If
 
