@@ -423,8 +423,15 @@ Public Class ScoreUpdateChecker
             Next
 
             outputXL.SetActiveSheet("Progress")
-            ret.ITPiEmployeeCount = outputXL.GetData(7, 8) + outputXL.GetData(8, 8) + outputXL.GetData(9, 8)
-            ret.TotalEmployeeCount = outputXL.GetData(10, 8)
+            Dim grandTotalColumnNumber As Integer = 1
+            For colNo As Integer = 1 To 8
+                If outputXL.GetData(4, colNo).ToString.ToUpper = "GRAND TOTAL" Then
+                    grandTotalColumnNumber = colNo
+                    Exit For
+                End If
+            Next
+            ret.ITPiEmployeeCount = outputXL.GetData(7, grandTotalColumnNumber) + outputXL.GetData(8, grandTotalColumnNumber) + outputXL.GetData(9, grandTotalColumnNumber)
+            ret.TotalEmployeeCount = outputXL.GetData(10, grandTotalColumnNumber)
 
             OnHeartbeat(String.Format("Closing Previous Month Output File for {0}", practice))
         End Using

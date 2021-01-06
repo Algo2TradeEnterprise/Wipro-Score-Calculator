@@ -171,7 +171,8 @@ Public Class PostProcess
                                        New Dictionary(Of String, String) From {{"Applicable for WFT", "Yes"}})
                     xl.ReorderPivotTable("Vertical View", "Status With Foundation", orderList)
                     'Dim verticalOrderList As List(Of String) = New List(Of String) From {"BFS AMERICAS", "BFS EMEA", "SECURITIES", "INSURANCE", "FS-CITI", "SUB", "BANKING PRODUCTS", "BFS- APAC", "BFSI-GRP", "EMERGING MARKETS", "BP ACCOUNT"}
-                    Dim verticalOrderList As List(Of String) = New List(Of String) From {"BFS AMERICAS", "BFS EMEA", "SECURITIES", "INSURANCE", "FS-CITI", "BANKING PRODUCTS", "BFS- APAC", "BFSI-GRP", "EMERGING MARKETS", "BP ACCOUNT"}
+                    'Dim verticalOrderList As List(Of String) = New List(Of String) From {"BFS AMERICAS", "BFS EMEA", "CAPITAL MARKETS", "INSURANCE", "FS-CITI", "BANKING PRODUCTS", "BFS- APAC", "BFSI-GROUP", "EMERGING MARKETS", "BP ACCOUNT"}
+                    Dim verticalOrderList As List(Of String) = New List(Of String) From {"BFS AMERICAS", "BFS EMEA", "CAPITAL MARKETS", "INSURANCE", "FS-CITI", "BANKING PRODUCTS", "BFS- APAC", "LATAM BFSI", "BFSI-GROUP", "EMERGING MARKETS", "BP ACCOUNT"}
                     xl.ReorderPivotTable("Vertical View", "Vertical", verticalOrderList)
 
                     OnHeartbeat("Creating pivot table 'Account View'")
@@ -242,7 +243,8 @@ Public Class PostProcess
                     xl.SetCellFormula(22, 2, "=H12")
 
                     xl.SetActiveSheet(dataSheet)
-                    Dim reportedDate As Date = Convert.ToDateTime(xl.GetData(2, 1))
+                    'Dim reportedDate As Date = Convert.ToDateTime(xl.GetData(2, 1))
+                    Dim reportedDate As Date = New Date(2020, 12, 25)
                     'Dim currentMonth As String = dataSheet.Substring(dataSheet.Count - 3, 3).Trim
                     Dim currentMonth As String = reportedDate.ToString("MMM")
                     If _quarterlyProgress IsNot Nothing AndAlso _quarterlyProgress.Count > 0 AndAlso _quarterlyProgress.ContainsKey(currentMonth.ToUpper) Then
@@ -255,12 +257,12 @@ Public Class PostProcess
                         End If
 
                         xl.SetActiveSheet("Vertical View")
-                        Dim verticalViewRange As String = "$B$7:$G$16"
+                        Dim verticalViewRange As String = "$B$7:$G$17"
                         Dim verticalViewData As Object(,) = xl.GetExcelInMemory(verticalViewRange)
                         xl.SetActiveSheet("Progress")
-                        Dim previousMonthRange As String = "$C$5:$I$19"
-                        Dim currentMonthRange As String = "$J$5:$P$19"
-                        Dim currentMonthDataDumpRange As String = "$J$5:$O$14"
+                        Dim previousMonthRange As String = "$C$5:$I$20"
+                        Dim currentMonthRange As String = "$J$5:$P$20"
+                        Dim currentMonthDataDumpRange As String = "$J$5:$O$15"
 
                         xl.SetData(3, 3, xl.GetData(3, 10), ExcelHelper.XLAlign.Center)
                         xl.SetData(3, 10, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
@@ -271,32 +273,32 @@ Public Class PostProcess
                         xl.SaveExcel()
                         Dim currentMonthData As Object(,) = xl.GetExcelInMemory(currentMonthDataDumpRange)
 
-                        Dim previousQuarter As String = xl.GetData(22, 10).ToString.Substring(0, 2).Trim
-                        Dim previousQuarterRange As String = "$C$24:$I$38"
-                        Dim currentQuarterRange As String = "$J$24:$P$38"
-                        Dim currentQuarterDataDumpRange As String = "$J$24:$O$33"
+                        Dim previousQuarter As String = xl.GetData(23, 10).ToString.Substring(0, 2).Trim
+                        Dim previousQuarterRange As String = "$C$25:$I$40"
+                        Dim currentQuarterRange As String = "$J$25:$P$40"
+                        Dim currentQuarterDataDumpRange As String = "$J$25:$O$35"
                         If previousQuarter.ToUpper <> currentQuarter.ToUpper Then
-                            xl.SetData(22, 3, xl.GetData(22, 10), ExcelHelper.XLAlign.Center)
-                            xl.SetData(22, 10, String.Format("{0} FY {1}", currentQuarter, fy), ExcelHelper.XLAlign.Center)
+                            xl.SetData(23, 3, xl.GetData(23, 10), ExcelHelper.XLAlign.Center)
+                            xl.SetData(23, 10, String.Format("{0} FY {1}", currentQuarter, fy), ExcelHelper.XLAlign.Center)
                             Dim previousQuarterData As Object(,) = xl.GetExcelInMemory(currentQuarterRange)
                             xl.WriteArrayToExcel(previousQuarterData, previousQuarterRange)
                         End If
                         xl.WriteArrayToExcel(currentMonthData, currentQuarterDataDumpRange)
 
-                        Dim previousYear As String = xl.GetData(41, 10).ToString.Substring(7, 2).Trim
-                        Dim previousYearRange As String = "$C$43:$I$57"
-                        Dim currentYearRange As String = "$J$43:$P$57"
-                        Dim currentYearDataDumpRange As String = "$J$43:$O$52"
+                        Dim previousYear As String = xl.GetData(43, 10).ToString.Substring(7, 2).Trim
+                        Dim previousYearRange As String = "$C$45:$I$60"
+                        Dim currentYearRange As String = "$J$45:$P$60"
+                        Dim currentYearDataDumpRange As String = "$J$45:$O$55"
                         If previousYear.ToUpper <> fy.ToUpper Then
-                            xl.SetData(41, 3, xl.GetData(41, 10), ExcelHelper.XLAlign.Center)
+                            xl.SetData(43, 3, xl.GetData(43, 10), ExcelHelper.XLAlign.Center)
                             Dim previousYearData As Object(,) = xl.GetExcelInMemory(currentYearRange)
                             xl.WriteArrayToExcel(previousYearData, previousYearRange)
                         End If
-                        xl.SetData(41, 10, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
+                        xl.SetData(43, 10, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
                         xl.WriteArrayToExcel(currentMonthData, currentYearDataDumpRange)
 
-                        Dim currentInitiationRange As String = "$J$62:$O$71"
-                        xl.SetData(60, 10, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
+                        Dim currentInitiationRange As String = "$J$65:$O$75"
+                        xl.SetData(63, 10, String.Format("{0} FY {1}", currentMonth, fy), ExcelHelper.XLAlign.Center)
                         xl.WriteArrayToExcel(currentMonthData, currentInitiationRange)
                     End If
                 End If
