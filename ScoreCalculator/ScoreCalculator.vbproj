@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="ASG.vb" />
     <Compile Include="Common.vb" />
+    <Compile Include="EmployeeMapping.vb" />
     <Compile Include="frmImpactChange.Designer.vb">
       <DependentUpon>frmImpactChange.vb</DependentUpon>
     </Compile>

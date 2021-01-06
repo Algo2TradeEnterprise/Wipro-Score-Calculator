@@ -223,6 +223,7 @@ Public Class frmAllProcess
     Private ReadOnly _postProcessFolder As String = Path.Combine(My.Application.Info.DirectoryPath, "Excel Test", "Post Process")
 
     Private _availableScoreUpdates As Dictionary(Of String, PracticeDetails) = Nothing
+    Private _emailEmpMapping As List(Of EmployeeMapping) = Nothing
 
     Private _canceller As CancellationTokenSource
     Private Sub frmPreProcess_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -262,18 +263,23 @@ Public Class frmAllProcess
             Dim previousMonthRawScoreFiles As List(Of String) = Nothing
             Dim previousMonthOutputFiles As List(Of String) = Nothing
             Dim mappingFile As String = Nothing
+            Dim currentMonthBFSI As String = Nothing
+            Dim previousMonthBFSI As String = Nothing
 
             'Pre Process
-            StartFileDistribution(currentMonthRawScoreFiles, previousMonthRawScoreFiles, previousMonthOutputFiles, mappingFile)
+            StartFileDistribution(currentMonthRawScoreFiles, previousMonthRawScoreFiles, previousMonthOutputFiles, mappingFile, currentMonthBFSI, previousMonthBFSI)
 
             If currentMonthRawScoreFiles IsNot Nothing AndAlso currentMonthRawScoreFiles.Count > 0 AndAlso
                 previousMonthRawScoreFiles IsNot Nothing AndAlso previousMonthRawScoreFiles.Count > 0 Then
-                Using scrUpdtChkHlpr As New ScoreUpdateChecker(_canceller, currentMonthRawScoreFiles, previousMonthRawScoreFiles, previousMonthOutputFiles, mappingFile)
+                Using scrUpdtChkHlpr As New ScoreUpdateChecker(_canceller, currentMonthRawScoreFiles, previousMonthRawScoreFiles, previousMonthOutputFiles, mappingFile, currentMonthBFSI, previousMonthBFSI)
                     AddHandler scrUpdtChkHlpr.Heartbeat, AddressOf OnHeartbeat
                     AddHandler scrUpdtChkHlpr.HeartbeatError, AddressOf OnHeartbeatError
                     AddHandler scrUpdtChkHlpr.WaitingFor, AddressOf OnWaitingFor
                     AddHandler scrUpdtChkHlpr.DocumentRetryStatus, AddressOf OnDocumentRetryStatus
                     AddHandler scrUpdtChkHlpr.DocumentDownloadComplete, AddressOf OnDocumentDownloadComplete
+
+                    OnHeartbeatMain("Creating Email Employee Mapping")
+                    _emailEmpMapping = Await scrUpdtChkHlpr.EmailEmployeeMappingAsync().ConfigureAwait(False)
 
                     OnHeartbeatMain("Checking score update between previous month and current month score")
                     _availableScoreUpdates = Await scrUpdtChkHlpr.CheckScoreUpdateAsync().ConfigureAwait(False)
@@ -311,7 +317,8 @@ Public Class frmAllProcess
     End Function
 
     Private Sub StartFileDistribution(ByRef currentMonthRawScoreFiles As List(Of String), ByRef previousMonthRawScoreFiles As List(Of String),
-                                      ByRef previousMonthOutputFiles As List(Of String), ByRef mappingFile As String)
+                                      ByRef previousMonthOutputFiles As List(Of String), ByRef mappingFile As String,
+                                      ByRef currentMonthBFSI As String, ByRef previousMonthBFSI As String)
         OnHeartbeatMain("Distributing files to there required folders")
         Dim inputFolder As String = GetTextBoxText_ThreadSafe(txtFolderpath)
 
@@ -378,6 +385,17 @@ Public Class frmAllProcess
                     End If
                 End If
             Next
+
+            For Each runningFile In Directory.GetFiles(inputFolder)
+                _canceller.Token.ThrowIfCancellationRequested()
+                If runningFile.ToUpper.Contains("BFSI") Then
+                    If runningFile.ToUpper.Contains(previousMonth.ToUpper) Then
+                        previousMonthBFSI = runningFile
+                    Else
+                        currentMonthBFSI = runningFile
+                    End If
+                End If
+            Next
         End If
     End Sub
 
@@ -394,7 +412,7 @@ Public Class frmAllProcess
         Next
         If mappingFile Is Nothing Then Throw New ApplicationException("Mapping file not exits")
 
-        Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile, _availableScoreUpdates)
+        Using prePrcsHlpr As New PreProcess(_canceller, folderPath, mappingFile, _availableScoreUpdates, _emailEmpMapping)
             AddHandler prePrcsHlpr.Heartbeat, AddressOf OnHeartbeat
             AddHandler prePrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
             AddHandler prePrcsHlpr.WaitingFor, AddressOf OnWaitingFor
@@ -426,7 +444,7 @@ Public Class frmAllProcess
 
         If mappingFilename Is Nothing Then Throw New ApplicationException("Mapping file not exits")
         If empFilename Is Nothing Then Throw New ApplicationException("Employee file not exits")
-        Using inPrcsHlpr As New InProcess(_canceller, mappingFilename, empFilename, asgFilename)
+        Using inPrcsHlpr As New InProcess(_canceller, mappingFilename, empFilename, asgFilename, _emailEmpMapping)
             AddHandler inPrcsHlpr.Heartbeat, AddressOf OnHeartbeat
             AddHandler inPrcsHlpr.HeartbeatError, AddressOf OnHeartbeatError
             AddHandler inPrcsHlpr.WaitingFor, AddressOf OnWaitingFor

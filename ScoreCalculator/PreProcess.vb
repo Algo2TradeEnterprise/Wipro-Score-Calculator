@@ -34,17 +34,19 @@ Public Class PreProcess
     Private ReadOnly _outputDirectoryName As String
     Private ReadOnly _mappingFile As String
     Private ReadOnly _availableScoreUpdates As Dictionary(Of String, PracticeDetails) = Nothing
+    Private ReadOnly _emailEmpMap As List(Of EmployeeMapping) = Nothing
     Private ReadOnly monthList As Dictionary(Of String, String)
     Private ReadOnly scoreFileSchema As Dictionary(Of String, String)
     Private ReadOnly empFileSchema As Dictionary(Of String, String)
 
     Public Sub New(ByVal canceller As CancellationTokenSource, ByVal directoryName As String, ByVal mappingFile As String,
-                   ByVal availableScoreUpdates As Dictionary(Of String, PracticeDetails))
+                   ByVal availableScoreUpdates As Dictionary(Of String, PracticeDetails), ByVal emailEmpMap As List(Of EmployeeMapping))
         _cts = canceller
         _inputDirectoryName = directoryName
         _outputDirectoryName = Path.Combine(Directory.GetParent(_inputDirectoryName).FullName, "In Process")
         _mappingFile = mappingFile
         _availableScoreUpdates = availableScoreUpdates
+        _emailEmpMap = emailEmpMap
 
         _cmn = New Common(_cts)
         monthList = New Dictionary(Of String, String) From
@@ -161,37 +163,44 @@ Public Class PreProcess
                                     _cts.Token.ThrowIfCancellationRequested()
                                     Dim empID As String = currentMonthScoreData(rowCounter, 1)
                                     If empID IsNot Nothing Then
-                                        Dim previousScoreRow As Integer = _cmn.GetRowOf2DArray(previousMonthScoreData, 1, empID, True)
-                                        If previousScoreRow <> Integer.MinValue Then
-                                            For columnCounter As Integer = 3 To currentMonthScoreData.GetLength(1) - 1
-                                                _cts.Token.ThrowIfCancellationRequested()
-                                                Dim columnName As String = currentMonthScoreData(1, columnCounter)
-                                                Dim currentScore As String = currentMonthScoreData(rowCounter, columnCounter)
-                                                Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
-                                                Dim previousScore As String = Nothing
-                                                If previousScoreColumn <> Integer.MinValue Then
-                                                    previousScore = previousMonthScoreData(previousScoreRow, previousScoreColumn)
-                                                End If
-                                                If previousScore IsNot Nothing AndAlso IsNumeric(previousScore) Then
-                                                    Dim updatedScore As Decimal = Decimal.MinValue
-                                                    If _availableScoreUpdates.ContainsKey(practice.Trim.ToUpper) Then
-                                                        If _availableScoreUpdates(practice.Trim.ToUpper) IsNot Nothing AndAlso
-                                                                _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData IsNot Nothing AndAlso
-                                                                _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData.ContainsKey(empID.Trim.ToUpper) Then
-                                                            Dim scoreDetails As ScoreData =
-                                                                    _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData(empID.Trim.ToUpper).Find(Function(x)
-                                                                                                                                                                  Return x.SkillName.ToUpper = columnName.ToUpper
-                                                                                                                                                              End Function)
-                                                            If scoreDetails IsNot Nothing AndAlso scoreDetails.CurrentMonthScore > scoreDetails.PreviousMonthScore Then
-                                                                updatedScore = Math.Min(100, previousScore + (scoreDetails.CurrentMonthScore - scoreDetails.PreviousMonthScore) / 100)
-                                                            End If
+                                        Dim runningEmpIDs As List(Of String) = _emailEmpMap.Find(Function(x)
+                                                                                                     Return x.EmpIDs.Contains(empID.Trim.ToUpper)
+                                                                                                 End Function).EmpIDs
+                                        For Each runningEmpID In runningEmpIDs
+                                            If runningEmpID IsNot Nothing Then
+                                                Dim previousScoreRow As Integer = _cmn.GetRowOf2DArray(previousMonthScoreData, 1, runningEmpID, True)
+                                                If previousScoreRow <> Integer.MinValue Then
+                                                    For columnCounter As Integer = 3 To currentMonthScoreData.GetLength(1) - 1
+                                                        _cts.Token.ThrowIfCancellationRequested()
+                                                        Dim columnName As String = currentMonthScoreData(1, columnCounter)
+                                                        Dim currentScore As String = currentMonthScoreData(rowCounter, columnCounter)
+                                                        Dim previousScoreColumn As Integer = _cmn.GetColumnOf2DArray(previousMonthScoreData, 1, columnName)
+                                                        Dim previousScore As String = Nothing
+                                                        If previousScoreColumn <> Integer.MinValue Then
+                                                            previousScore = previousMonthScoreData(previousScoreRow, previousScoreColumn)
                                                         End If
-                                                    End If
+                                                        If previousScore IsNot Nothing AndAlso IsNumeric(previousScore) Then
+                                                            Dim updatedScore As Decimal = Decimal.MinValue
+                                                            If _availableScoreUpdates.ContainsKey(practice.Trim.ToUpper) Then
+                                                                If _availableScoreUpdates(practice.Trim.ToUpper) IsNot Nothing AndAlso
+                                                                        _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData IsNot Nothing AndAlso
+                                                                        _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData.ContainsKey(empID.Trim.ToUpper) Then
+                                                                    Dim scoreDetails As ScoreData =
+                                                                            _availableScoreUpdates(practice.Trim.ToUpper).RawScoreUpdateData(empID.Trim.ToUpper).Find(Function(x)
+                                                                                                                                                                          Return x.SkillName.ToUpper = columnName.ToUpper
+                                                                                                                                                                      End Function)
+                                                                    If scoreDetails IsNot Nothing AndAlso scoreDetails.CurrentMonthScore > scoreDetails.PreviousMonthScore Then
+                                                                        updatedScore = Math.Min(100, previousScore + (scoreDetails.CurrentMonthScore - scoreDetails.PreviousMonthScore) / 100)
+                                                                    End If
+                                                                End If
+                                                            End If
 
-                                                    currentMonthScoreData(rowCounter, columnCounter) = Math.Ceiling(Math.Max(Val(currentScore), Math.Max(updatedScore, Val(previousScore))))
+                                                            currentMonthScoreData(rowCounter, columnCounter) = Math.Ceiling(Math.Max(Val(currentScore), Math.Max(updatedScore, Val(previousScore))))
+                                                        End If
+                                                    Next
                                                 End If
-                                            Next
-                                        End If
+                                            End If
+                                        Next
                                     End If
                                 Next
 
@@ -303,7 +312,7 @@ Public Class PreProcess
                             End If
                         End If
 
-                            Dim outputFileName As String = Path.Combine(_outputDirectoryName, Path.GetFileName(currentFileName))
+                        Dim outputFileName As String = Path.Combine(_outputDirectoryName, Path.GetFileName(currentFileName))
                         If File.Exists(outputFileName) Then File.Delete(outputFileName)
                         Using xl As New ExcelHelper(outputFileName, ExcelHelper.ExcelOpenStatus.OpenAfreshForWrite, ExcelHelper.ExcelSaveType.XLS_XLSX, _cts)
                             AddHandler xl.Heartbeat, AddressOf OnHeartbeat
@@ -419,21 +428,32 @@ Public Class PreProcess
                                         _cts.Token.ThrowIfCancellationRequested()
                                         Dim empID As String = currentMonthEmpData(rowCounter, currentEmpIdColumnNumber)
                                         If empID IsNot Nothing Then
-                                            Dim previousEmpRow As Integer = _cmn.GetRowOf2DArray(previousMonthEmpData, previousEmpIdColumnNumber, empID, True)
-                                            If previousEmpRow <> Integer.MinValue Then
-                                                If IsNumeric(previousMonthEmpData(previousEmpRow, previousStatusWithFoundationColumnNumber)) Then
-                                                    currentMonthEmpData(rowCounter, currentLastMonthLevelColumnNumber) = ""
-                                                Else
-                                                    currentMonthEmpData(rowCounter, currentLastMonthLevelColumnNumber) = previousMonthEmpData(previousEmpRow, previousStatusWithFoundationColumnNumber)
-                                                End If
-                                            End If
-                                            currentMonthEmpData(rowCounter, currentStatusWithFoundationColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Jscore'!$A:$D,2,FALSE)", empIdColumnName, rowCounter)
-                                            currentMonthEmpData(rowCounter, currentStatusWithoutFoundationColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Jscore'!$A:$D,3,FALSE)", empIdColumnName, rowCounter)
-                                            currentMonthEmpData(rowCounter, currentPiApproachColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Jscore'!$A:$D,4,FALSE)", empIdColumnName, rowCounter)
-                                            currentMonthEmpData(rowCounter, currentExperienceOkColumnNumber) = String.Format("=IF(OR(LEFT({0}{1},2)=""1Y"",LEFT({0}{1},2)=""0Y""),""N"",""Y"")", experienceColumnName, rowCounter)
-                                            currentMonthEmpData(rowCounter, currentAccountRemarksColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Account Validation'!$A:$D,3,FALSE)", empIdColumnName, rowCounter)
-                                            currentMonthEmpData(rowCounter, currentAccountStatusColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Account Validation'!$A:$D,4,FALSE)", empIdColumnName, rowCounter)
-                                            currentMonthEmpData(rowCounter, currentFinalAccountValidationColumnNumber) = String.Format("=IF(ISERROR({0}{1}),""Pending"",IF(OR({0}{1}=""Rotatable"",{0}{1}=""Rotatable > 6 months""),""Eligible"",IF({0}{1}=""Rotated"",""Rotated"",IF({0}{1}=""Pending Validation"",""Pending"",""Not Eligible""))))", accountStatusColumnName, rowCounter)
+                                            Try
+                                                Dim runningEmpIDs As List(Of String) = _emailEmpMap.Find(Function(x)
+                                                                                                             Return x.EmpIDs.Contains(empID.Trim.ToUpper)
+                                                                                                         End Function).EmpIDs
+                                                For Each runningEmpID In runningEmpIDs
+                                                    If runningEmpID IsNot Nothing Then
+                                                        Dim previousEmpRow As Integer = _cmn.GetRowOf2DArray(previousMonthEmpData, previousEmpIdColumnNumber, runningEmpID, True)
+                                                        If previousEmpRow <> Integer.MinValue Then
+                                                            If IsNumeric(previousMonthEmpData(previousEmpRow, previousStatusWithFoundationColumnNumber)) Then
+                                                                currentMonthEmpData(rowCounter, currentLastMonthLevelColumnNumber) = ""
+                                                            Else
+                                                                currentMonthEmpData(rowCounter, currentLastMonthLevelColumnNumber) = previousMonthEmpData(previousEmpRow, previousStatusWithFoundationColumnNumber)
+                                                            End If
+                                                        End If
+                                                        currentMonthEmpData(rowCounter, currentStatusWithFoundationColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Jscore'!$A:$D,2,FALSE)", empIdColumnName, rowCounter)
+                                                        currentMonthEmpData(rowCounter, currentStatusWithoutFoundationColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Jscore'!$A:$D,3,FALSE)", empIdColumnName, rowCounter)
+                                                        currentMonthEmpData(rowCounter, currentPiApproachColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Jscore'!$A:$D,4,FALSE)", empIdColumnName, rowCounter)
+                                                        currentMonthEmpData(rowCounter, currentExperienceOkColumnNumber) = String.Format("=IF(OR(LEFT({0}{1},2)=""1Y"",LEFT({0}{1},2)=""0Y""),""N"",""Y"")", experienceColumnName, rowCounter)
+                                                        currentMonthEmpData(rowCounter, currentAccountRemarksColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Account Validation'!$A:$D,3,FALSE)", empIdColumnName, rowCounter)
+                                                        currentMonthEmpData(rowCounter, currentAccountStatusColumnNumber) = String.Format("=VLOOKUP(${0}{1},'Account Validation'!$A:$D,4,FALSE)", empIdColumnName, rowCounter)
+                                                        currentMonthEmpData(rowCounter, currentFinalAccountValidationColumnNumber) = String.Format("=IF(ISERROR({0}{1}),""Pending"",IF(OR({0}{1}=""Rotatable"",{0}{1}=""Rotatable > 6 months""),""Eligible"",IF({0}{1}=""Rotated"",""Rotated"",IF({0}{1}=""Pending Validation"",""Pending"",""Not Eligible""))))", accountStatusColumnName, rowCounter)
+                                                    End If
+                                                Next
+                                            Catch ex As Exception
+                                                Throw ex
+                                            End Try
                                         End If
                                     Next
 
