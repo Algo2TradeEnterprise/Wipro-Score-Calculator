@@ -251,9 +251,9 @@ Public Class PostProcess
                         Dim currentQuarter As String = _quarterlyProgress(currentMonth.ToUpper)
                         Dim fy As String = Nothing
                         If currentQuarter = "Q4" Then
-                            fy = Now.Year.ToString.Substring(2, 2)
+                            fy = reportedDate.Year.ToString.Substring(2, 2)
                         Else
-                            fy = (Now.Year + 1).ToString.Substring(2, 2)
+                            fy = (reportedDate.Year + 1).ToString.Substring(2, 2)
                         End If
 
                         xl.SetActiveSheet("Vertical View")
