@@ -87,7 +87,7 @@ Public Class InProcess
             {{"Emp No", "EMP_CODE"},
             {"Name", "EMP_NAME"},
             {"Career_Band", "CAREER_BAND"},
-            {"Vertical", "SAP_VERTICAL_DESC"},
+            {"Vertical", "Sector"},
             {"Normalized Account", "GROUP_CUSTOMER_NAME"},
             {"Email ID", "EMPLOYEE_EMAIL_ID"},
             {"Final Sub Practice", "SAP_SUBPRAC_DESC"},
@@ -121,6 +121,8 @@ Public Class InProcess
                     Next
                 End If
             End Using
+
+            File.Delete(_asgFile)
         End If
 
         Dim employeeData As Object(,) = Nothing
@@ -169,7 +171,7 @@ Public Class InProcess
                             Dim counter As Integer = 0
                             For Each runningFile In Directory.GetFiles(_directoryName, "*.xlsx")
                                 _cts.Token.ThrowIfCancellationRequested()
-                                If runningFile.ToUpper.Contains(skillName.ToUpper) Then
+                                If Path.GetFileName(runningFile).ToUpper.StartsWith(skillName.ToUpper) Then
                                     scoreFilename = runningFile
                                     counter += 1
                                     If counter > 1 Then

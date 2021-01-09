@@ -37,6 +37,8 @@ Partial Class frmImpactChange
         Me.grpDBI = New System.Windows.Forms.GroupBox()
         Me.ucImpactDBI = New ScoreCalculator.ucImpact()
         Me.btnSubmit = New System.Windows.Forms.Button()
+        Me.grpAS = New System.Windows.Forms.GroupBox()
+        Me.ucImpactAS = New ScoreCalculator.ucImpact()
         Me.grpDAAI.SuspendLayout()
         Me.grpQET.SuspendLayout()
         Me.grpMS.SuspendLayout()
@@ -44,6 +46,7 @@ Partial Class frmImpactChange
         Me.grpUNIX.SuspendLayout()
         Me.grpMF.SuspendLayout()
         Me.grpDBI.SuspendLayout()
+        Me.grpAS.SuspendLayout()
         Me.SuspendLayout()
         '
         'grpDAAI
@@ -167,18 +170,36 @@ Partial Class frmImpactChange
         '
         'btnSubmit
         '
-        Me.btnSubmit.Location = New System.Drawing.Point(923, 374)
+        Me.btnSubmit.Location = New System.Drawing.Point(925, 429)
         Me.btnSubmit.Name = "btnSubmit"
         Me.btnSubmit.Size = New System.Drawing.Size(106, 46)
         Me.btnSubmit.TabIndex = 7
         Me.btnSubmit.Text = "Submit"
         Me.btnSubmit.UseVisualStyleBackColor = True
         '
+        'grpAS
+        '
+        Me.grpAS.Controls.Add(Me.ucImpactAS)
+        Me.grpAS.Location = New System.Drawing.Point(521, 320)
+        Me.grpAS.Name = "grpAS"
+        Me.grpAS.Size = New System.Drawing.Size(510, 100)
+        Me.grpAS.TabIndex = 8
+        Me.grpAS.TabStop = False
+        Me.grpAS.Text = "AS"
+        '
+        'ucImpactAS
+        '
+        Me.ucImpactAS.Location = New System.Drawing.Point(6, 22)
+        Me.ucImpactAS.Name = "ucImpactAS"
+        Me.ucImpactAS.Size = New System.Drawing.Size(494, 62)
+        Me.ucImpactAS.TabIndex = 0
+        '
         'frmImpactChange
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(1036, 423)
+        Me.ClientSize = New System.Drawing.Size(1038, 481)
+        Me.Controls.Add(Me.grpAS)
         Me.Controls.Add(Me.btnSubmit)
         Me.Controls.Add(Me.grpUNIX)
         Me.Controls.Add(Me.grpMF)
@@ -199,6 +220,7 @@ Partial Class frmImpactChange
         Me.grpUNIX.ResumeLayout(False)
         Me.grpMF.ResumeLayout(False)
         Me.grpDBI.ResumeLayout(False)
+        Me.grpAS.ResumeLayout(False)
         Me.ResumeLayout(False)
 
     End Sub
@@ -218,4 +240,6 @@ Partial Class frmImpactChange
     Friend WithEvents grpDBI As GroupBox
     Friend WithEvents ucImpactDBI As ucImpact
     Friend WithEvents btnSubmit As Button
+    Friend WithEvents grpAS As GroupBox
+    Friend WithEvents ucImpactAS As ucImpact
 End Class

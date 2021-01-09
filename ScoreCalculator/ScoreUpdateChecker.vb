@@ -87,7 +87,7 @@ Public Class ScoreUpdateChecker
             {{"Emp No", "EMP_CODE"},
             {"Name", "EMP_NAME"},
             {"Career_Band", "CAREER_BAND"},
-            {"Vertical", "SAP_VERTICAL_DESC"},
+            {"Vertical", "Sector"},
             {"Normalized Account", "GROUP_CUSTOMER_NAME"},
             {"Email ID", "EMPLOYEE_EMAIL_ID"},
             {"Final Sub Practice", "SAP_SUBPRAC_DESC"},
