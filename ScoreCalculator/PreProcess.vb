@@ -289,6 +289,7 @@ Public Class PreProcess
                                     OnHeartbeat(String.Format("Updating Current Month score for impact {0}/{1}. Practice:{2}", empCount, practiceData.ProjectedEmployeeData.Count, runningPractice))
                                     Dim projectedData As ProjectedDetails = practiceData.ProjectedEmployeeData(runningEmp.Key)
                                     If projectedData.Progress Then
+                                        Dim itpiIncreased As Boolean = False
                                         If projectedData.ITPi.ITPiScore > 40 AndAlso projectedData.ITPi.ITPiScore <= 65 Then
                                             Dim rawScoreData As List(Of ScoreData) = Nothing
                                             If practiceData.RawScoreUpdateData.ContainsKey(runningEmp.Key) Then
@@ -296,6 +297,7 @@ Public Class PreProcess
                                             End If
                                             UpdateCurrentMonthScoreForITPiImpact(projectedData.ITPi, currentMonthScoreData, runningEmp.Key, rawScoreData)
                                             changeDone += 1
+                                            itpiIncreased = True
                                         End If
                                         If projectedData.Foundation.FoundationScore > 30 AndAlso projectedData.Foundation.FoundationScore <= 40 Then
                                             Dim rawScoreData As List(Of ScoreData) = Nothing
@@ -303,7 +305,7 @@ Public Class PreProcess
                                                 rawScoreData = practiceData.RawScoreUpdateData(runningEmp.Key)
                                             End If
                                             UpdateCurrentMonthScoreForFoundationImpact(projectedData.Foundation, currentMonthScoreData, runningEmp.Key, rawScoreData)
-                                            changeDone += 1
+                                            If Not itpiIncreased Then changeDone += 1
                                         End If
                                     End If
 
