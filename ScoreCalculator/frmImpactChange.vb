@@ -66,6 +66,13 @@
                     ucImpactAS.lblCurrentMonthITPi.Text = String.Format("Current Month I T Pi: {0} ({1}%)", runningPractice.Value.CurrentMonthITPiEmployeeCount, curMonthPer)
                     ucImpactAS.lblProjectedImpact.Text = String.Format("Projected Impact: {0}%", curMonthPer - preMonthPer)
                     ucImpactAS.txtRequiredImpact.Text = curMonthPer - preMonthPer
+                ElseIf runningPractice.Key = "DCS" Then
+                    Dim preMonthPer As Decimal = Math.Round((runningPractice.Value.PreviousMonthITPiEmployeeCount / runningPractice.Value.PreviousMonthTotalEmployeeCount) * 100, 2)
+                    Dim curMonthPer As Decimal = Math.Round((runningPractice.Value.CurrentMonthITPiEmployeeCount / runningPractice.Value.CurrentMonthTotalEmployeeCount) * 100, 2)
+                    ucImpactDCS.lblPreviousMonthITPi.Text = String.Format("Previous Month I T Pi: {0} ({1}%)", runningPractice.Value.PreviousMonthITPiEmployeeCount, preMonthPer)
+                    ucImpactDCS.lblCurrentMonthITPi.Text = String.Format("Current Month I T Pi: {0} ({1}%)", runningPractice.Value.CurrentMonthITPiEmployeeCount, curMonthPer)
+                    ucImpactDCS.lblProjectedImpact.Text = String.Format("Projected Impact: {0}%", curMonthPer - preMonthPer)
+                    ucImpactDCS.txtRequiredImpact.Text = curMonthPer - preMonthPer
                 End If
             Next
         End If
@@ -107,6 +114,9 @@
                 ElseIf runningPractice.Key = "AS" Then
                     Dim impactPer As Decimal = runningPractice.Value.PreviousMonthImpactPercentage + Val(ucImpactAS.txtRequiredImpact.Text)
                     reqEmpCount += Math.Ceiling(runningPractice.Value.CurrentMonthTotalEmployeeCount * impactPer / 100)
+                ElseIf runningPractice.Key = "DCS" Then
+                    Dim impactPer As Decimal = runningPractice.Value.PreviousMonthImpactPercentage + Val(ucImpactDCS.txtRequiredImpact.Text)
+                    reqEmpCount += Math.Ceiling(runningPractice.Value.CurrentMonthTotalEmployeeCount * impactPer / 100)
                 End If
             Next
         End If
@@ -136,6 +146,8 @@
                         runningPractice.Value.RequiredImpactPercentage = Val(ucImpactUNIX.txtRequiredImpact.Text)
                     ElseIf runningPractice.Key = "AS" Then
                         runningPractice.Value.RequiredImpactPercentage = Val(ucImpactAS.txtRequiredImpact.Text)
+                    ElseIf runningPractice.Key = "DCS" Then
+                        runningPractice.Value.RequiredImpactPercentage = Val(ucImpactDCS.txtRequiredImpact.Text)
                     End If
                 Next
             End If
